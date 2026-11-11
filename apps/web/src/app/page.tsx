@@ -320,12 +320,17 @@ const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 function MermaidDiagramView({
   chartId,
+  title,
   code,
 }: {
   chartId: string;
+  title: string;
   code: string;
 }) {
   const [svgHtml, setSvgHtml] = useState<string>("");
+  const [zoom, setZoom] = useState<number>(100);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [modalZoom, setModalZoom] = useState<number>(150);
 
   useEffect(() => {
     let cancelled = false;
@@ -355,7 +360,7 @@ function MermaidDiagramView({
               "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js";
             script.async = true;
             script.onload = () => resolve();
-            script.onerror = () => reject(new Error("No se pudo cargar Mermaid"));
+            script.onerror = () => reject(new Error("No se pudo cargar el renderizador de diagramas"));
             document.head.appendChild(script);
           });
         }
@@ -369,11 +374,16 @@ function MermaidDiagramView({
           const uniqueId = `${chartId}-${Math.random().toString(36).slice(2, 8)}`;
           const rendered = await w.mermaid.render(uniqueId, code);
           if (!cancelled) {
-            setSvgHtml(rendered.svg);
+            // Reemplazar max-width inline de Mermaid para permitir escalado fluido con botones de zoom
+            const scalableSvg = rendered.svg.replace(
+              /max-width:\s*[^;"]+;?/gi,
+              "width: 100%; height: auto;"
+            );
+            setSvgHtml(scalableSvg);
           }
         }
       } catch {
-        // Si falla la carga desde CDN, se muestra el bloque de código Mermaid limpio
+        // Si falla la carga desde CDN, se muestra el bloque de código fuente del diagrama
       }
     }
 
@@ -383,24 +393,237 @@ function MermaidDiagramView({
     };
   }, [chartId, code]);
 
+  useEffect(() => {
+    if (!isModalOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setIsModalOpen(false);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isModalOpen]);
+
+  const controlButtonStyle: React.CSSProperties = {
+    padding: "0.35rem 0.65rem",
+    borderRadius: 6,
+    border: "1px solid #334155",
+    backgroundColor: "#1e293b",
+    color: "#e2e8f0",
+    fontSize: "0.78rem",
+    fontWeight: 600,
+    cursor: "pointer",
+  };
+
   return (
     <div style={{ display: "grid", gap: "0.75rem" }}>
+      {/* Barra de controles de Zoom y Modal a Pantalla Completa */}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "0.5rem",
+          backgroundColor: "#0b1120",
+          padding: "0.5rem 0.75rem",
+          borderRadius: 8,
+          border: "1px solid #334155",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+          <span style={{ fontSize: "0.78rem", color: "#94a3b8", marginRight: "0.25rem" }}>
+            Zoom: <strong>{zoom}%</strong>
+          </span>
+          <button
+            type="button"
+            onClick={() => setZoom((z) => Math.max(50, z - 25))}
+            style={controlButtonStyle}
+            title="Alejar diagrama"
+          >
+            − Alejar
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(100)}
+            style={controlButtonStyle}
+            title="Restablecer zoom al 100%"
+          >
+            100%
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom((z) => Math.min(300, z + 25))}
+            style={controlButtonStyle}
+            title="Acercar diagrama"
+          >
+            + Acercar
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            setModalZoom(150);
+            setIsModalOpen(true);
+          }}
+          style={{
+            ...controlButtonStyle,
+            backgroundColor: "#0284c7",
+            border: "1px solid #38bdf8",
+            color: "#ffffff",
+          }}
+        >
+          ⛶ Ampliar en Modal (Pantalla Completa)
+        </button>
+      </div>
+
       {svgHtml && (
         <div
           style={{
             backgroundColor: "#0b1120",
-            padding: "1rem",
+            padding: "1.25rem",
             borderRadius: 10,
             border: "1px solid #334155",
-            overflowX: "auto",
-            textAlign: "center",
+            overflow: "auto",
+            maxHeight: "560px",
           }}
-          dangerouslySetInnerHTML={{ __html: svgHtml }}
-        />
+        >
+          <div
+            style={{
+              width: `${zoom}%`,
+              minWidth: zoom > 100 ? `${zoom}%` : "100%",
+              margin: "0 auto",
+              transition: "width 0.15s ease",
+            }}
+            dangerouslySetInnerHTML={{ __html: svgHtml }}
+          />
+        </div>
       )}
+
+      {/* Modal interactivo de pantalla completa con controles de Zoom */}
+      {isModalOpen && (
+        <dialog
+          open
+          aria-label={title}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            width: "100vw",
+            height: "100vh",
+            maxWidth: "100vw",
+            maxHeight: "100vh",
+            margin: 0,
+            border: "none",
+            backgroundColor: "rgba(2, 6, 23, 0.92)",
+            display: "flex",
+            flexDirection: "column",
+            padding: "1.25rem",
+            boxSizing: "border-box",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#0f172a",
+              border: "1px solid #38bdf8",
+              borderRadius: 12,
+              display: "flex",
+              flexDirection: "column",
+              width: "100%",
+              height: "100%",
+              overflow: "hidden",
+            }}
+          >
+            {/* Cabecera del Modal */}
+            <div
+              style={{
+                padding: "0.85rem 1.25rem",
+                backgroundColor: "#1e293b",
+                borderBottom: "1px solid #334155",
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "0.75rem",
+              }}
+            >
+              <strong style={{ color: "#f8fafc", fontSize: "0.98rem" }}>{title}</strong>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "0.8rem", color: "#cbd5e1" }}>
+                  Zoom: <strong>{modalZoom}%</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setModalZoom((z) => Math.max(50, z - 25))}
+                  style={controlButtonStyle}
+                >
+                  − Alejar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalZoom(100)}
+                  style={controlButtonStyle}
+                >
+                  100%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalZoom(150)}
+                  style={controlButtonStyle}
+                >
+                  150%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalZoom((z) => Math.min(350, z + 25))}
+                  style={controlButtonStyle}
+                >
+                  + Acercar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  style={{
+                    ...controlButtonStyle,
+                    backgroundColor: "#dc2626",
+                    border: "1px solid #f87171",
+                    color: "#ffffff",
+                    marginLeft: "0.5rem",
+                  }}
+                >
+                  ✕ Cerrar Modal
+                </button>
+              </div>
+            </div>
+
+            {/* Lienzo desplazable del diagrama en el Modal */}
+            <div
+              style={{
+                flex: 1,
+                overflow: "auto",
+                padding: "1.5rem",
+                backgroundColor: "#0b1120",
+              }}
+            >
+              <div
+                style={{
+                  width: `${modalZoom}%`,
+                  minWidth: `${modalZoom}%`,
+                  margin: "0 auto",
+                  transition: "width 0.15s ease",
+                }}
+                dangerouslySetInnerHTML={{ __html: svgHtml }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <details style={{ fontSize: "0.78rem", color: "#94a3b8" }}>
         <summary style={{ cursor: "pointer", userSelect: "none" }}>
-          Ver código fuente Mermaid (<code>```mermaid</code>)
+          Ver definición textual del diagrama
         </summary>
         <pre
           style={{
@@ -1276,24 +1499,6 @@ LIMIT 1;`,
             <strong>Amazon Web Services (AWS)</strong> en la región de{" "}
             <strong>Querétaro, México (<code>mx-central-1</code>)</strong>.
           </p>
-          <div style={{ fontSize: "0.82rem", color: "#94a3b8" }}>
-            ¿Dudas con algún término técnico como{" "}
-            <a href="#glosario-zod" style={{ color: "#38bdf8" }}>
-              Zod
-            </a>
-            ,{" "}
-            <a href="#glosario-traceparent" style={{ color: "#38bdf8" }}>
-              W3C traceparent
-            </a>{" "}
-            o la{" "}
-            <a href="#glosario-nomenclatura" style={{ color: "#38bdf8" }}>
-              nomenclatura estándar wppes-*
-            </a>
-            ? Consulta el{" "}
-            <a href="#glosario-tecnico" style={{ color: "#a7f3d0", fontWeight: 600 }}>
-              Glosario Técnico al final de la página ↓
-            </a>
-          </div>
         </div>
 
         <div
@@ -1379,19 +1584,6 @@ LIMIT 1;`,
               negocio, el catálogo de servicios AWS o los diagramas de arquitectura.
             </p>
           </div>
-          <span
-            style={{
-              fontSize: "0.75rem",
-              backgroundColor: "#0f172a",
-              color: "#a7f3d0",
-              padding: "0.3rem 0.7rem",
-              borderRadius: 999,
-              border: "1px solid #065f46",
-              fontFamily: "monospace",
-            }}
-          >
-            Stack Activo: wppes-mach-poc-dev-mxc1-stack (CREATE_COMPLETE)
-          </span>
         </div>
 
         <div style={{ display: "grid", gap: "0.65rem" }}>
@@ -1718,7 +1910,7 @@ AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach
             )}
           </div>
 
-          {/* PANEL 3 DEL ACORDEÓN: DIAGRAMA MERMAID API-LED CONNECTIVITY */}
+          {/* PANEL 3 DEL ACORDEÓN: DIAGRAMA API-LED CONNECTIVITY */}
           <div
             style={{
               backgroundColor: "#0f172a",
@@ -1749,7 +1941,7 @@ AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach
               }}
             >
               <span>
-                3. Diagrama Mermaid — Arquitectura en modo API-Led Connectivity (xAPI → pAPI → sAPI)
+                3. Diagrama — Arquitectura en modo API-Led Connectivity (xAPI → pAPI → sAPI)
               </span>
               <span
                 style={{
@@ -1781,13 +1973,14 @@ AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach
                 </p>
                 <MermaidDiagramView
                   chartId="mermaid-api-led-chart"
+                  title="3. Diagrama — Arquitectura en modo API-Led Connectivity (xAPI → pAPI → sAPI)"
                   code={MERMAID_API_LED_CODE}
                 />
               </div>
             )}
           </div>
 
-          {/* PANEL 4 DEL ACORDEÓN: DIAGRAMA MERMAID END-TO-END DESDE GITHUB ACTIONS HASTA AWS RDS */}
+          {/* PANEL 4 DEL ACORDEÓN: DIAGRAMA END-TO-END DESDE GITHUB ACTIONS HASTA AWS RDS */}
           <div
             style={{
               backgroundColor: "#0f172a",
@@ -1818,8 +2011,8 @@ AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach
               }}
             >
               <span>
-                4. Diagrama Mermaid — Interacción de extremo a extremo (GitHub Actions OIDC → AWS
-                RDS PostgreSQL)
+                4. Diagrama — Interacción de extremo a extremo (GitHub Actions OIDC → AWS RDS
+                PostgreSQL)
               </span>
               <span
                 style={{
@@ -1851,6 +2044,7 @@ AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach
                 </p>
                 <MermaidDiagramView
                   chartId="mermaid-e2e-cicd-chart"
+                  title="4. Diagrama — Interacción de extremo a extremo (GitHub Actions OIDC → AWS RDS PostgreSQL)"
                   code={MERMAID_E2E_CICD_CODE}
                 />
               </div>

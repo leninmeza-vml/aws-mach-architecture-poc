@@ -18,8 +18,8 @@ sources: [prompt-setup-poc-aws-vscode.md]
 2. **Acordeón Interactivo de 4 Paneles con Estilo Visual Unificado (`#38bdf8`)**:
    - **Panel 1 (`poc-overview`)**: Capacidades de WPP Enterprise Solutions & VML y explicación de los 4 pilares MACH.
    - **Panel 2 (`aws-services`)**: Consolida en un único lugar la tabla de servicios de AWS y GitHub, la convención de nomenclatura `wppes-mach-poc-dev-mxc1-*` y los comandos de despliegue sin claves estáticas (eliminando la antigua tercera pestaña duplicada).
-   - **Panel 3 (`mermaid-api-led`)**: Diagrama Mermaid en vivo de la arquitectura API-Led Connectivity (`xAPI -> pAPI -> sAPI -> RDS`).
-   - **Panel 4 (`mermaid-e2e-cicd`)**: Diagrama Mermaid de secuencia de extremo a extremo desde GitHub Actions (OIDC + Pages) hasta Amazon RDS PostgreSQL 16 en `mx-central-1`.
+   - **Panel 3 (`mermaid-api-led`)**: Diagrama en vivo de la arquitectura API-Led Connectivity (`xAPI -> pAPI -> sAPI -> RDS`) con controles de zoom (`− Alejar`, `100%`, `+ Acercar`) y vista en modal de pantalla completa.
+   - **Panel 4 (`mermaid-e2e-cicd`)**: Diagrama de secuencia de extremo a extremo desde GitHub Actions (OIDC + Pages) hasta Amazon RDS PostgreSQL 16 en `mx-central-1`, también con barra de zoom y modal interactivo.
 3. **Dos Pestañas Operativas Persistentes (`POST` y `GET`)**:
    - **Pestaña 1 (`POST /v1/transactions`)** y **Pestaña 2 (`GET /v1/transactions/{id}`)** mantienen sus respuestas, historiales y diagramas interactivos de 6 capas de manera independiente.
 4. **Glosario de Términos Técnicos y Arquitectónicos (`#glosario-tecnico`) y Footer Enriquecido**:

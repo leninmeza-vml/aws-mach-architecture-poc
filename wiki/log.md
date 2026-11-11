@@ -56,6 +56,11 @@ Para consultar las últimas 5 operaciones vía terminal: `grep "^## \[" wiki/log
 - Se unificó el color y estilo visual de los 4 botones `"Abrir / Cerrar"` del acordeón (`#38bdf8`).
 - Se añadió el **Glosario de Términos Técnicos y Arquitectónicos** (`#glosario-tecnico`) al final de la página y enlaces explicativos en el pie de página (`footer`).
 
+## [2026-11-11] update | Limpieza de Textos en Cabecera/Acordeón y Controles de Zoom + Modal a Pantalla Completa en Diagramas
+- Se removieron de `apps/web/src/app/page.tsx` el aviso `"¿Dudas con algún término técnico..."` de la cabecera y la insignia `"Stack Activo: wppes-mach-poc-dev-mxc1-stack (CREATE_COMPLETE)"` del acordeón.
+- Se eliminó la palabra `"Mermaid"` de los títulos visibles de los paneles 3 y 4 del acordeón y del desplegable de código fuente del diagrama.
+- Se incorporaron controles interactivos de zoom (`− Alejar`, `100%`, `+ Acercar`) y un modal `<dialog>` de pantalla completa con zoom hasta `350%` en `MermaidDiagramView` para visualizar ambos diagramas con total nitidez.
+
 
 
 
