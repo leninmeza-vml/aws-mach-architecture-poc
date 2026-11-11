@@ -618,7 +618,7 @@ function MermaidDiagramView({
               />
             </div>
           </div>
-        </div>
+        </dialog>
       )}
 
       <details style={{ fontSize: "0.78rem", color: "#94a3b8" }}>
