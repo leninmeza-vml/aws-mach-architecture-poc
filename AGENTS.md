@@ -67,9 +67,12 @@ El repositorio es un **Monorepo** gestionado con `pnpm` workspaces y `Turborepo`
 
 ---
 
-## 3. REGLAS DE SEGURIDAD Y DEVSECOPS
+## 3. REGLAS DE SEGURIDAD, CALIDAD (BDD + UNIT TESTS >= 90%) Y DEVSECOPS
 
-- **Cero Credenciales Estáticas**: Prohibido almacenar o solicitar `AWS_ACCESS_KEY_ID` o `AWS_SECRET_ACCESS_KEY`. En local se utiliza exclusivamente AWS IAM Identity Center (`aws sso login --profile poc-mach-dev`) y en GitHub Actions se utiliza federación OIDC (`aws-actions/configure-aws-credentials`).
+- **Puerta de Calidad Obligatoria Pre-Commit / Pre-Push (Unit Tests + BDD >= 90% Coverage)**:
+  - **Antes de cualquier `git commit` o `git push`**, se **DEBEN** ejecutar en local todas las pruebas unitarias y las pruebas BDD (incluyendo los flujos de los dos formularios del portal web: `POST /v1/transactions` y `GET /v1/transactions/{transactionId}` y las capas `xAPI -> pAPI -> sAPI -> Database`).
+  - **El coverage (cobertura de pruebas) debe ser como mínimo del 90%** (`--experimental-test-coverage --test-coverage-lines=90`). Queda estrictamente prohibido hacer `git commit` o `git push` si alguna prueba falla o si el coverage cae por debajo del 90%.
+- **Cero Credenciales Estáticas**: Prohibido almacenar o solicitar `AWS_ACCESS_KEY_ID` o `AWS_SECRET_ACCESS_KEY`. En local se utiliza exclusivamente AWS IAM Identity Center (`aws sso login --profile wppes-mach-poc-dev`) y en GitHub Actions se utiliza federación OIDC (`aws-actions/configure-aws-credentials`).
 - **Trazabilidad Distribuida W3C**: Todo request desde `apps/web` hasta `apps/sapi` debe generar/propagar el header `traceparent: 00-{traceId}-{spanId}-01`.
 - **Validación Estricta**: Ningún payload entra o sale de una capa sin validación de esquema desde `@poc-mach/types`.
 - **Sincronización con Codebase Memory**: Al añadir o refactorizar módulos TypeScript, asegúrate de mantener actualizado el grafo de `codebase-memory`.

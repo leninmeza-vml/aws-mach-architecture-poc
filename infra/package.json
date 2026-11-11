@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "type-check": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test dist/lib/poc-stack.test.js",
+    "test": "node --test --experimental-test-coverage --test-coverage-include='dist/**' --test-coverage-lines=90 dist/lib/poc-stack.test.js",
     "lint": "tsc -p tsconfig.json --noEmit",
     "synth": "cdk synth --no-lookups"
   },

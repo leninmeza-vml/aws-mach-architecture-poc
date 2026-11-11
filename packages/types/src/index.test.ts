@@ -19,11 +19,21 @@ describe("@poc-mach/types contracts", () => {
     assert.equal(parsed.currency, "USD");
   });
 
-  it("genera y parsea un header W3C traceparent válido", () => {
+  it("genera y parsea un header W3C traceparent válido y propaga traceId existente", () => {
     const trace = createTraceparent();
+    const childTrace = createTraceparent(trace.traceId);
+    assert.equal(childTrace.traceId, trace.traceId);
+
     const parsed = parseTraceparent(trace.raw);
     assert.equal(parsed.traceId, trace.traceId);
     assert.equal(parsed.version, "00");
+
+    const fallbackFromMissing = parseTraceparent(undefined);
+    assert.equal(fallbackFromMissing.version, "00");
+    assert.equal(fallbackFromMissing.traceId.length, 32);
+
+    const fallbackFromInvalid = parseTraceparent("invalid-header");
+    assert.equal(fallbackFromInvalid.version, "00");
   });
 
   it("valida un UUID en QueryStatusSchema", () => {

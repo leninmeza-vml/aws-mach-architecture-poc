@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "tsc --noEmit",
     "type-check": "tsc --noEmit",
-    "test": "node --eval \"console.log('web static export check passed')\""
+    "test": "tsc -p tsconfig.test.json && node --test --experimental-test-coverage --test-coverage-include='.test-dist/**' --test-coverage-lines=90 .test-dist/transaction-forms.bdd.test.js"
   },
   "dependencies": {
     "@poc-mach/types": "workspace:*",
@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@poc-mach/tsconfig": "workspace:*",
+    "@poc-mach/xapi": "workspace:*",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",

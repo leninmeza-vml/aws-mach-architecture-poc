@@ -1,6 +1,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { evaluateBusinessRules, handler } from "./handler";
+import { randomUUID } from "node:crypto";
+import {
+  evaluateBusinessRules,
+  handler,
+  invokeRemoteSapiLambda,
+  PapiRequest,
+} from "./handler";
 
 describe("@poc-mach/papi business rules & orchestration", () => {
   it("clasifica riesgo LOW, MEDIUM y HIGH según el monto", () => {
@@ -18,8 +24,8 @@ describe("@poc-mach/papi business rules & orchestration", () => {
     });
   });
 
-  it("orquesta la creación y consulta delegando en sAPI", async () => {
-    const res = await handler({
+  it("orquesta la creación (PROCESS_CREATE_TRANSACTION) y consulta (PROCESS_QUERY_STATUS) delegando en sAPI", async () => {
+    const createRes = await handler({
       operation: "PROCESS_CREATE_TRANSACTION",
       traceparent:
         "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
@@ -31,8 +37,57 @@ describe("@poc-mach/papi business rules & orchestration", () => {
       },
     });
 
-    assert.equal(res.statusCode, 201);
-    assert.equal(res.data?.riskLevel, "HIGH");
-    assert.equal(res.data?.status, "PENDING");
+    assert.equal(createRes.statusCode, 201);
+    assert.equal(createRes.data?.riskLevel, "HIGH");
+    assert.equal(createRes.data?.status, "PENDING");
+    assert.ok(createRes.data?.transactionId);
+
+    const queryRes = await handler({
+      operation: "PROCESS_QUERY_STATUS",
+      traceparent: createRes.traceparent,
+      payload: {
+        transactionId: createRes.data.transactionId,
+      },
+    });
+
+    assert.equal(queryRes.statusCode, 200);
+    assert.equal(queryRes.data?.customerId, "CUST-PAPI-99");
+  });
+
+  it("retorna 400 ante una operación no reconocida y soporta invokeRemoteSapiLambda", async () => {
+    const invalidRes = await handler({
+      operation: "UNKNOWN_OP",
+      payload: {},
+    } as unknown as PapiRequest);
+    assert.equal(invalidRes.statusCode, 400);
+
+    const mockTxId = randomUUID();
+    const remoteRes = await invokeRemoteSapiLambda(
+      "wppes-mach-poc-dev-mxc1-lmb-sapi",
+      {
+        action: "GET_TRANSACTION_BY_ID",
+        payload: { transactionId: mockTxId },
+      },
+      () => ({
+        LambdaClient: class {
+          async send() {
+            return {
+              Payload: new Uint8Array(
+                Buffer.from(
+                  JSON.stringify({
+                    statusCode: 200,
+                    traceId: "4bf92f3577b34da6a3ce929d0e0e4736",
+                  })
+                )
+              ),
+            };
+          }
+        },
+        InvokeCommand: class {
+          constructor(public readonly input: unknown) {}
+        },
+      })
+    );
+    assert.equal(remoteRes.statusCode, 200);
   });
 });

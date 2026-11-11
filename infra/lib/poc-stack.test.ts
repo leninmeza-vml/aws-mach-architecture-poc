@@ -27,7 +27,10 @@ describe("PocMachStack AWS CDK v2 IaC synthesis", () => {
     template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
       Name: "wppes-mach-poc-dev-mxc1-apigw-xapi",
       CorsConfiguration: Match.objectLike({
-        AllowOrigins: ["https://leninmeza-vml.github.io"],
+        AllowOrigins: Match.arrayWith([
+          "https://leninmeza-vml.github.io",
+          "http://localhost:3000",
+        ]),
         AllowHeaders: Match.arrayWith(["Authorization", "traceparent"]),
       }),
     });

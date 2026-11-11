@@ -1,0 +1,8 @@
+{
+  "extends": "@poc-mach/tsconfig/node.json",
+  "compilerOptions": {
+    "rootDir": "./src/flows",
+    "outDir": "./.test-dist"
+  },
+  "include": ["src/flows/**/*.ts"]
+}

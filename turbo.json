@@ -3,10 +3,10 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "out/**", "cdk.out/**"]
+      "outputs": ["dist/**", "dist-lambda/**", ".next/**", "out/**", "cdk.out/**"]
     },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build"],
       "outputs": []
     },
     "lint": {

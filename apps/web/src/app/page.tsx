@@ -2,12 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  CreateTransactionSchema,
-  QueryStatusSchema,
   TransactionResponse,
-  createTraceparent,
   Currency,
 } from "@poc-mach/types";
+import {
+  buildInitialHops,
+  executeCreateTransactionFormFlow,
+  executeQueryTransactionFormFlow,
+  LayerHopTrace,
+} from "../flows/transaction-forms";
 
 const XAPI_BASE_URL =
   process.env.NEXT_PUBLIC_XAPI_URL ||
@@ -19,7 +22,6 @@ type AccordionSectionId =
   | "aws-services"
   | "mermaid-api-led"
   | "mermaid-e2e-cicd";
-type HopStatus = "idle" | "processing" | "success" | "error";
 
 const MERMAID_API_LED_CODE = `flowchart LR
     subgraph Canal["Canal Headless (GitHub Pages CDN)"]
@@ -87,21 +89,6 @@ const MERMAID_E2E_CICD_CODE = `sequenceDiagram
     PAPI-->>XAPI: Respuesta orquestada + traceparent
     XAPI-->>SPA: HTTP 201/200 JSON + traceparent
     end`;
-
-export interface LayerHopTrace {
-  id: string;
-  layerCode: string;
-  title: string;
-  awsResourceName: string;
-  subnetOrZone: string;
-  status: HopStatus;
-  spanId: string;
-  traceparent: string;
-  latencyMs: number;
-  summary: string;
-  artifactTitle: string;
-  artifactContent: string;
-}
 
 export interface OperationExecutionState {
   loading: boolean;
@@ -206,115 +193,6 @@ const WPP_AWS_NAMING_CATALOG = [
     purpose: "Federación OIDC con GitHub Actions (Cero claves estáticas)",
   },
 ];
-
-function buildInitialHops(mode: "POST" | "GET"): LayerHopTrace[] {
-  return [
-    {
-      id: "spa",
-      layerCode: "1. Headless UI",
-      title: "Next.js Static App",
-      awsResourceName: "leninmeza-vml.github.io (apps/web)",
-      subnetOrZone: "GitHub Pages CDN",
-      status: "idle",
-      spanId: "----------------",
-      traceparent: "Pendiente de ejecución",
-      latencyMs: 0,
-      summary:
-        mode === "POST"
-          ? "Valida formulario con CreateTransactionSchema (Zod) y genera traceparent raíz."
-          : "Valida UUID con QueryStatusSchema (Zod) y genera traceparent raíz.",
-      artifactTitle: "Validación en Cliente (Zod + W3C Trace)",
-      artifactContent: "// Ejecuta el formulario para inspeccionar el payload validado en el cliente.",
-    },
-    {
-      id: "apigw",
-      layerCode: "2. API Gateway + Cognito",
-      title: "HTTP API v2 & JWT Auth",
-      awsResourceName: "wppes-mach-poc-dev-mxc1-apigw-xapi",
-      subnetOrZone: "AWS Edge (mx-central-1 Querétaro)",
-      status: "idle",
-      spanId: "----------------",
-      traceparent: "Pendiente de ejecución",
-      latencyMs: 0,
-      summary: "Verifica firma Bearer JWT contra wppes-mach-poc-dev-mxc1-cog-up y políticas CORS.",
-      artifactTitle: "Inspección de Autorización JWT y CORS",
-      artifactContent: "// Esperando solicitud HTTP hacia API Gateway v2...",
-    },
-    {
-      id: "xapi",
-      layerCode: "3. Experience API (xAPI)",
-      title: "Lambda Experience Layer",
-      awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-xapi",
-      subnetOrZone: "AWS Lambda (mx-central-1)",
-      status: "idle",
-      spanId: "----------------",
-      traceparent: "Pendiente de ejecución",
-      latencyMs: 0,
-      summary: "Adapta el contrato del canal web, preserva traceId y delega a pAPI.",
-      artifactTitle: "Contexto de Ejecución en xAPI",
-      artifactContent: "// Esperando invocación de wppes-mach-poc-dev-mxc1-lmb-xapi...",
-    },
-    {
-      id: "papi",
-      layerCode: "4. Process API (pAPI)",
-      title: "Lambda Business Orchestrator",
-      awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-papi",
-      subnetOrZone: "AWS Lambda (mx-central-1)",
-      status: "idle",
-      spanId: "----------------",
-      traceparent: "Pendiente de ejecución",
-      latencyMs: 0,
-      summary:
-        mode === "POST"
-          ? "Evalúa reglas de negocio antifraude (LOW, MEDIUM, HIGH) y asigna estado."
-          : "Orquesta la consulta de estado transaccional hacia la capa de sistema.",
-      artifactTitle: "Motor de Reglas de Negocio en pAPI",
-      artifactContent: "// Esperando orquestación en wppes-mach-poc-dev-mxc1-lmb-papi...",
-    },
-    {
-      id: "sapi",
-      layerCode: "5. System API (sAPI)",
-      title: "Lambda System Layer (VPC)",
-      awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-sapi",
-      subnetOrZone: "VPC Subred Privada Aislada (mxc1)",
-      status: "idle",
-      spanId: "----------------",
-      traceparent: "Pendiente de ejecución",
-      latencyMs: 0,
-      summary: "Lee secreto en Secrets Manager y abre conexión segura hacia RDS (puerto 5432).",
-      artifactTitle: "Comando Interno de System API",
-      artifactContent: "// Esperando invocación privada en wppes-mach-poc-dev-mxc1-lmb-sapi...",
-    },
-    {
-      id: "rds",
-      layerCode: "6. Base de Datos (SoR)",
-      title: "Amazon RDS PostgreSQL 16",
-      awsResourceName: "wppes-mach-poc-dev-mxc1-rds-pg",
-      subnetOrZone: "PRIVATE_ISOLATED (TCP 5432)",
-      status: "idle",
-      spanId: "----------------",
-      traceparent: "Pendiente de ejecución",
-      latencyMs: 0,
-      summary:
-        mode === "POST"
-          ? "Ejecuta INSERT parametrizado ($1..$10) en tabla transactions."
-          : "Ejecuta SELECT parametrizado ($1) por transaction_id en tabla transactions.",
-      artifactTitle: "Sentencia SQL Parametrizada (Drizzle / pg Pool)",
-      artifactContent: "-- Esperando operación SQL en wppes_mach_poc...",
-    },
-  ];
-}
-
-function generateUuidV4(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -703,255 +581,52 @@ export default function HomePage() {
   async function handleCreateTransaction(e: React.FormEvent) {
     e.preventDefault();
 
-    const parsed = CreateTransactionSchema.safeParse({
+    setPostState((prev) => ({
+      ...prev,
+      loading: true,
+      errorMessage: null,
+      selectedHopIndex: 0,
+    }));
+
+    const result = await executeCreateTransactionFormFlow({
       customerId,
-      amount: Number(amount),
+      amountInput: amount,
       currency,
       concept,
+      jwtToken,
+      baseUrl: XAPI_BASE_URL,
+      existingHistory: createdHistory,
     });
 
-    if (!parsed.success) {
+    if (!result.ok || !result.response) {
       setPostState((prev) => ({
         ...prev,
-        errorMessage: parsed.error.issues
-          .map((i) => `${i.path.join(".")}: ${i.message}`)
-          .join(" | "),
+        loading: false,
+        errorMessage: result.errorMessage,
       }));
       return;
     }
 
-    const rootTrace = createTraceparent();
-    const spanApigw = createTraceparent(rootTrace.traceId);
-    const spanXapi = createTraceparent(rootTrace.traceId);
-    const spanPapi = createTraceparent(rootTrace.traceId);
-    const spanSapi = createTraceparent(rootTrace.traceId);
-    const spanRds = createTraceparent(rootTrace.traceId);
-
-    const riskLevel =
-      parsed.data.amount > 50_000
-        ? "HIGH"
-        : parsed.data.amount > 10_000
-        ? "MEDIUM"
-        : "LOW";
-    const computedStatus = parsed.data.amount > 50_000 ? "PENDING" : "APPROVED";
-    const generatedId = generateUuidV4();
-    const nowIso = new Date().toISOString();
-
-    const stepDefinitions: Omit<LayerHopTrace, "status">[] = [
-      {
-        id: "spa",
-        layerCode: "1. Headless UI",
-        title: "Next.js Static App",
-        awsResourceName: "leninmeza-vml.github.io (apps/web)",
-        subnetOrZone: "GitHub Pages CDN",
-        spanId: rootTrace.spanId,
-        traceparent: rootTrace.raw,
-        latencyMs: 4,
-        summary: "Payload validado con CreateTransactionSchema (Zod) y traceparent raíz emitido.",
-        artifactTitle: "1. Petición HTTP Saliente desde Headless SPA (apps/web)",
-        artifactContent: JSON.stringify(
-          {
-            method: "POST",
-            url: `${XAPI_BASE_URL}/v1/transactions`,
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${jwtToken.slice(0, 28)}...`,
-              traceparent: rootTrace.raw,
-            },
-            body: parsed.data,
-          },
-          null,
-          2
-        ),
-      },
-      {
-        id: "apigw",
-        layerCode: "2. API Gateway + Cognito",
-        title: "HTTP API v2 & JWT Auth",
-        awsResourceName: "wppes-mach-poc-dev-mxc1-apigw-xapi",
-        subnetOrZone: "AWS Edge (mx-central-1 Querétaro)",
-        spanId: spanApigw.spanId,
-        traceparent: spanApigw.raw,
-        latencyMs: 12,
-        summary: "JWT validado por Cognito Authorizer y cabeceras CORS verificadas.",
-        artifactTitle: "2. Validación en API Gateway v2 + Cognito Authorizer",
-        artifactContent: JSON.stringify(
-          {
-            apiGatewayName: "wppes-mach-poc-dev-mxc1-apigw-xapi",
-            authorizer: "wppes-mach-poc-dev-mxc1-auth-cognito-jwt",
-            userPool: "wppes-mach-poc-dev-mxc1-cog-up",
-            corsOriginAllowed: "https://leninmeza-vml.github.io",
-            routeMatched: "POST /v1/transactions",
-            jwtVerified: true,
-          },
-          null,
-          2
-        ),
-      },
-      {
-        id: "xapi",
-        layerCode: "3. Experience API (xAPI)",
-        title: "Lambda Experience Layer",
-        awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-xapi",
-        subnetOrZone: "AWS Lambda (mx-central-1)",
-        spanId: spanXapi.spanId,
-        traceparent: spanXapi.raw,
-        latencyMs: 19,
-        summary: "Contrato validado en xAPI; genera nuevo child span W3C e invoca a pAPI.",
-        artifactTitle: "3. Delegación desde xAPI hacia pAPI (Evento Interno)",
-        artifactContent: JSON.stringify(
-          {
-            sourceLambda: "wppes-mach-poc-dev-mxc1-lmb-xapi",
-            targetLambda: "wppes-mach-poc-dev-mxc1-lmb-papi",
-            operation: "PROCESS_CREATE_TRANSACTION",
-            traceparent: spanXapi.raw,
-            payload: parsed.data,
-          },
-          null,
-          2
-        ),
-      },
-      {
-        id: "papi",
-        layerCode: "4. Process API (pAPI)",
-        title: "Lambda Business Orchestrator",
-        awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-papi",
-        subnetOrZone: "AWS Lambda (mx-central-1)",
-        spanId: spanPapi.spanId,
-        traceparent: spanPapi.raw,
-        latencyMs: 27,
-        summary: `Regla evaluada: Monto ${parsed.data.amount} ${parsed.data.currency} -> Riesgo ${riskLevel} / Estado ${computedStatus}.`,
-        artifactTitle: "4. Evaluación de Reglas de Negocio en pAPI (apps/papi)",
-        artifactContent: JSON.stringify(
-          {
-            orchestratorLambda: "wppes-mach-poc-dev-mxc1-lmb-papi",
-            evaluatedRule:
-              "amount > 50000 => HIGH/PENDING | amount > 10000 => MEDIUM/APPROVED | else => LOW/APPROVED",
-            inputAmount: parsed.data.amount,
-            computedRiskLevel: riskLevel,
-            computedStatus,
-            nextHop: "wppes-mach-poc-dev-mxc1-lmb-sapi (PERSIST_TRANSACTION)",
-            traceparent: spanPapi.raw,
-          },
-          null,
-          2
-        ),
-      },
-      {
-        id: "sapi",
-        layerCode: "5. System API (sAPI)",
-        title: "Lambda System Layer (VPC)",
-        awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-sapi",
-        subnetOrZone: "VPC Subred Privada Aislada (mxc1)",
-        spanId: spanSapi.spanId,
-        traceparent: spanSapi.raw,
-        latencyMs: 34,
-        summary: "Obtiene credenciales de Secrets Manager y conecta por SG privado al puerto 5432.",
-        artifactTitle: "5. Ejecución Aislada en VPC Privada (sAPI -> Secrets Manager)",
-        artifactContent: JSON.stringify(
-          {
-            systemLambda: "wppes-mach-poc-dev-mxc1-lmb-sapi",
-            vpc: "wppes-mach-poc-dev-mxc1-vpc",
-            subnet: "wppes-mach-poc-dev-mxc1-snet-isolated",
-            sourceSecurityGroup: "wppes-mach-poc-dev-mxc1-sg-sapi-lambda",
-            targetSecurityGroup: "wppes-mach-poc-dev-mxc1-sg-rds-postgres (TCP 5432)",
-            secretId: "wppes/mach-poc/dev/mxc1/rds-postgres-credentials",
-            action: "PERSIST_TRANSACTION",
-          },
-          null,
-          2
-        ),
-      },
-      {
-        id: "rds",
-        layerCode: "6. Base de Datos (SoR)",
-        title: "Amazon RDS PostgreSQL 16",
-        awsResourceName: "wppes-mach-poc-dev-mxc1-rds-pg",
-        subnetOrZone: "PRIVATE_ISOLATED (TCP 5432)",
-        spanId: spanRds.spanId,
-        traceparent: spanRds.raw,
-        latencyMs: 18,
-        summary: "Registro insertado en tabla transactions y confirmado a través de las capas.",
-        artifactTitle: "6. Sentencia SQL Parametrizada en PostgreSQL (wppes_mach_poc)",
-        artifactContent: `-- Instancia: wppes-mach-poc-dev-mxc1-rds-pg (DB: wppes_mach_poc)
-INSERT INTO transactions (
-  transaction_id, customer_id, amount, currency, concept,
-  status, risk_level, trace_id, created_at, updated_at
-) VALUES (
-  '${generatedId}',
-  '${parsed.data.customerId}',
-  ${parsed.data.amount},
-  '${parsed.data.currency}',
-  '${parsed.data.concept.replace(/'/g, "''")}',
-  '${computedStatus}',
-  '${riskLevel}',
-  '${rootTrace.traceId}',
-  '${nowIso}',
-  '${nowIso}'
-) RETURNING *;`,
-      },
-    ];
-
-    setPostState({
-      loading: true,
-      errorMessage: null,
-      response: postState.response,
-      rootTraceparent: rootTrace.raw,
-      hops: stepDefinitions.map((h) => ({ ...h, status: "idle" })),
-      selectedHopIndex: 0,
-      executedAt: null,
-    });
-
-    // Animación interactiva capa por capa
-    for (let i = 0; i < stepDefinitions.length; i++) {
+    for (let i = 0; i < result.hops.length; i++) {
       setPostState((prev) => ({
         ...prev,
+        rootTraceparent: result.rootTraceparent ?? "",
         selectedHopIndex: i,
-        hops: prev.hops.map((h, idx) => ({
+        hops: result.hops.map((h, idx) => ({
           ...h,
           status: idx < i ? "success" : idx === i ? "processing" : "idle",
         })),
       }));
-      await delay(180);
+      await delay(140);
     }
 
-    let finalRecord: TransactionResponse;
-    try {
-      const response = await fetch(`${XAPI_BASE_URL}/v1/transactions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${jwtToken}`,
-          traceparent: rootTrace.raw,
-        },
-        body: JSON.stringify(parsed.data),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      finalRecord = (await response.json()) as TransactionResponse;
-    } catch {
-      finalRecord = {
-        transactionId: generatedId,
-        customerId: parsed.data.customerId,
-        amount: parsed.data.amount,
-        currency: parsed.data.currency,
-        concept: parsed.data.concept,
-        status: computedStatus,
-        riskLevel,
-        traceId: rootTrace.traceId,
-        createdAt: nowIso,
-        updatedAt: nowIso,
-      };
-    }
-
-    setCreatedHistory((prev) => [finalRecord, ...prev.slice(0, 9)]);
+    setCreatedHistory(result.updatedHistory);
     setPostState({
       loading: false,
       errorMessage: null,
-      response: finalRecord,
-      rootTraceparent: rootTrace.raw,
-      hops: stepDefinitions.map((h) => ({ ...h, status: "success" })),
+      response: result.response,
+      rootTraceparent: result.rootTraceparent ?? "",
+      hops: result.hops,
       selectedHopIndex: 5,
       executedAt: new Date().toLocaleTimeString(),
     });
@@ -960,235 +635,50 @@ INSERT INTO transactions (
   async function handleQueryStatus(e: React.FormEvent) {
     e.preventDefault();
 
-    const parsed = QueryStatusSchema.safeParse({ transactionId: queryId.trim() });
-    if (!parsed.success) {
+    setGetState((prev) => ({
+      ...prev,
+      loading: true,
+      errorMessage: null,
+      selectedHopIndex: 0,
+    }));
+
+    const result = await executeQueryTransactionFormFlow({
+      queryId,
+      jwtToken,
+      baseUrl: XAPI_BASE_URL,
+      existingHistory: createdHistory,
+    });
+
+    if (!result.ok || !result.response) {
       setGetState((prev) => ({
         ...prev,
-        errorMessage: parsed.error.issues.map((i) => i.message).join(" | "),
+        loading: false,
+        errorMessage: result.errorMessage,
       }));
       return;
     }
 
-    const rootTrace = createTraceparent();
-    const spanApigw = createTraceparent(rootTrace.traceId);
-    const spanXapi = createTraceparent(rootTrace.traceId);
-    const spanPapi = createTraceparent(rootTrace.traceId);
-    const spanSapi = createTraceparent(rootTrace.traceId);
-    const spanRds = createTraceparent(rootTrace.traceId);
-
-    const matchedFromHistory = createdHistory.find(
-      (item) => item.transactionId === parsed.data.transactionId
-    );
-
-    const stepDefinitions: Omit<LayerHopTrace, "status">[] = [
-      {
-        id: "spa",
-        layerCode: "1. Headless UI",
-        title: "Next.js Static App",
-        awsResourceName: "leninmeza-vml.github.io (apps/web)",
-        subnetOrZone: "GitHub Pages CDN",
-        spanId: rootTrace.spanId,
-        traceparent: rootTrace.raw,
-        latencyMs: 3,
-        summary: "UUID validado con QueryStatusSchema (Zod) y traceparent raíz generado.",
-        artifactTitle: "1. Solicitud GET Saliente desde Headless SPA (apps/web)",
-        artifactContent: JSON.stringify(
-          {
-            method: "GET",
-            url: `${XAPI_BASE_URL}/v1/transactions/${parsed.data.transactionId}`,
-            headers: {
-              Authorization: `Bearer ${jwtToken.slice(0, 28)}...`,
-              traceparent: rootTrace.raw,
-            },
-          },
-          null,
-          2
-        ),
-      },
-      {
-        id: "apigw",
-        layerCode: "2. API Gateway + Cognito",
-        title: "HTTP API v2 & JWT Auth",
-        awsResourceName: "wppes-mach-poc-dev-mxc1-apigw-xapi",
-        subnetOrZone: "AWS Edge (mx-central-1 Querétaro)",
-        spanId: spanApigw.spanId,
-        traceparent: spanApigw.raw,
-        latencyMs: 10,
-        summary: "Autorización JWT validada y path parameter {transactionId} extraído.",
-        artifactTitle: "2. Enrutamiento GET en API Gateway v2",
-        artifactContent: JSON.stringify(
-          {
-            apiGatewayName: "wppes-mach-poc-dev-mxc1-apigw-xapi",
-            routeMatched: "GET /v1/transactions/{transactionId}",
-            pathParameters: { transactionId: parsed.data.transactionId },
-            jwtVerified: true,
-          },
-          null,
-          2
-        ),
-      },
-      {
-        id: "xapi",
-        layerCode: "3. Experience API (xAPI)",
-        title: "Lambda Experience Layer",
-        awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-xapi",
-        subnetOrZone: "AWS Lambda (mx-central-1)",
-        spanId: spanXapi.spanId,
-        traceparent: spanXapi.raw,
-        latencyMs: 14,
-        summary: "Valida UUID de consulta y delega PROCESS_QUERY_STATUS a pAPI.",
-        artifactTitle: "3. Delegación de Consulta desde xAPI hacia pAPI",
-        artifactContent: JSON.stringify(
-          {
-            sourceLambda: "wppes-mach-poc-dev-mxc1-lmb-xapi",
-            targetLambda: "wppes-mach-poc-dev-mxc1-lmb-papi",
-            operation: "PROCESS_QUERY_STATUS",
-            traceparent: spanXapi.raw,
-            payload: { transactionId: parsed.data.transactionId },
-          },
-          null,
-          2
-        ),
-      },
-      {
-        id: "papi",
-        layerCode: "4. Process API (pAPI)",
-        title: "Lambda Business Orchestrator",
-        awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-papi",
-        subnetOrZone: "AWS Lambda (mx-central-1)",
-        spanId: spanPapi.spanId,
-        traceparent: spanPapi.raw,
-        latencyMs: 16,
-        summary: "Orquesta la recuperación del estado actual invocando a sAPI.",
-        artifactTitle: "4. Orquestación de Lectura en pAPI",
-        artifactContent: JSON.stringify(
-          {
-            orchestratorLambda: "wppes-mach-poc-dev-mxc1-lmb-papi",
-            operation: "PROCESS_QUERY_STATUS",
-            nextHop: "wppes-mach-poc-dev-mxc1-lmb-sapi (GET_TRANSACTION_BY_ID)",
-            traceparent: spanPapi.raw,
-          },
-          null,
-          2
-        ),
-      },
-      {
-        id: "sapi",
-        layerCode: "5. System API (sAPI)",
-        title: "Lambda System Layer (VPC)",
-        awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-sapi",
-        subnetOrZone: "VPC Subred Privada Aislada (mxc1)",
-        spanId: spanSapi.spanId,
-        traceparent: spanSapi.raw,
-        latencyMs: 22,
-        summary: "Ejecuta findById() a través del pool de conexiones en la subred aislada.",
-        artifactTitle: "5. Consulta Aislada en System API (VPC)",
-        artifactContent: JSON.stringify(
-          {
-            systemLambda: "wppes-mach-poc-dev-mxc1-lmb-sapi",
-            securityGroup: "wppes-mach-poc-dev-mxc1-sg-sapi-lambda -> TCP 5432",
-            action: "GET_TRANSACTION_BY_ID",
-            transactionId: parsed.data.transactionId,
-          },
-          null,
-          2
-        ),
-      },
-      {
-        id: "rds",
-        layerCode: "6. Base de Datos (SoR)",
-        title: "Amazon RDS PostgreSQL 16",
-        awsResourceName: "wppes-mach-poc-dev-mxc1-rds-pg",
-        subnetOrZone: "PRIVATE_ISOLATED (TCP 5432)",
-        spanId: spanRds.spanId,
-        traceparent: spanRds.raw,
-        latencyMs: 11,
-        summary: "SELECT parametrizado por clave primaria UUID retornado a sAPI.",
-        artifactTitle: "6. Consulta SQL Parametrizada en PostgreSQL (wppes_mach_poc)",
-        artifactContent: `-- Instancia: wppes-mach-poc-dev-mxc1-rds-pg (DB: wppes_mach_poc)
-SELECT
-  transaction_id AS "transactionId",
-  customer_id    AS "customerId",
-  amount::float8 AS "amount",
-  currency,
-  concept,
-  status,
-  risk_level     AS "riskLevel",
-  trace_id       AS "traceId",
-  created_at     AS "createdAt",
-  updated_at     AS "updatedAt"
-FROM transactions
-WHERE transaction_id = '${parsed.data.transactionId}'
-LIMIT 1;`,
-      },
-    ];
-
-    setGetState({
-      loading: true,
-      errorMessage: null,
-      response: getState.response,
-      rootTraceparent: rootTrace.raw,
-      hops: stepDefinitions.map((h) => ({ ...h, status: "idle" })),
-      selectedHopIndex: 0,
-      executedAt: null,
-    });
-
-    for (let i = 0; i < stepDefinitions.length; i++) {
+    for (let i = 0; i < result.hops.length; i++) {
       setGetState((prev) => ({
         ...prev,
+        rootTraceparent: result.rootTraceparent ?? "",
         selectedHopIndex: i,
-        hops: prev.hops.map((h, idx) => ({
+        hops: result.hops.map((h, idx) => ({
           ...h,
           status: idx < i ? "success" : idx === i ? "processing" : "idle",
         })),
       }));
-      await delay(160);
+      await delay(120);
     }
 
-    let finalRecord: TransactionResponse;
-    try {
-      const response = await fetch(
-        `${XAPI_BASE_URL}/v1/transactions/${parsed.data.transactionId}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${jwtToken}`,
-            traceparent: rootTrace.raw,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      finalRecord = (await response.json()) as TransactionResponse;
-    } catch {
-      finalRecord = matchedFromHistory
-        ? {
-            ...matchedFromHistory,
-            traceId: rootTrace.traceId,
-            updatedAt: new Date().toISOString(),
-          }
-        : {
-            transactionId: parsed.data.transactionId,
-            customerId: "WPPES-CUST-9001",
-            amount: 18500,
-            currency: "USD",
-            concept: "Transacción recuperada en simulación conectada (WPP Enterprise Solutions)",
-            status: "APPROVED",
-            riskLevel: "MEDIUM",
-            traceId: rootTrace.traceId,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-    }
-
+    const finalRecord = result.response;
     setQueriedHistory((prev) => [finalRecord, ...prev.slice(0, 9)]);
     setGetState({
       loading: false,
       errorMessage: null,
       response: finalRecord,
-      rootTraceparent: rootTrace.raw,
-      hops: stepDefinitions.map((h) => ({ ...h, status: "success" })),
+      rootTraceparent: result.rootTraceparent ?? "",
+      hops: result.hops,
       selectedHopIndex: 5,
       executedAt: new Date().toLocaleTimeString(),
     });

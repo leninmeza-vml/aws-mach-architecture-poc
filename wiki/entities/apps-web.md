@@ -20,8 +20,9 @@ sources: [prompt-setup-poc-aws-vscode.md]
    - **Panel 2 (`aws-services`)**: Consolida en un único lugar la tabla de servicios de AWS y GitHub, la convención de nomenclatura `wppes-mach-poc-dev-mxc1-*` y los comandos de despliegue sin claves estáticas (eliminando la antigua tercera pestaña duplicada).
    - **Panel 3 (`mermaid-api-led`)**: Diagrama en vivo de la arquitectura API-Led Connectivity (`xAPI -> pAPI -> sAPI -> RDS`) con controles de zoom (`− Alejar`, `100%`, `+ Acercar`) y vista en modal de pantalla completa.
    - **Panel 4 (`mermaid-e2e-cicd`)**: Diagrama de secuencia de extremo a extremo desde GitHub Actions (OIDC + Pages) hasta Amazon RDS PostgreSQL 16 en `mx-central-1`, también con barra de zoom y modal interactivo.
-3. **Dos Pestañas Operativas Persistentes (`POST` y `GET`)**:
+3. **Dos Pestañas Operativas Persistentes (`POST` y `GET`) y Pruebas BDD (>= 90% Coverage)**:
    - **Pestaña 1 (`POST /v1/transactions`)** y **Pestaña 2 (`GET /v1/transactions/{id}`)** mantienen sus respuestas, historiales y diagramas interactivos de 6 capas de manera independiente.
+   - La lógica de ambos formularios está desacoplada en `apps/web/src/flows/transaction-forms.ts` y verificada en local mediante pruebas BDD (`Given / When / Then`) en `apps/web/src/flows/transaction-forms.bdd.test.ts` con **100% de cobertura de líneas** sobre `transaction-forms.ts`.
 4. **Glosario de Términos Técnicos y Arquitectónicos (`#glosario-tecnico`) y Footer Enriquecido**:
    - Define en lenguaje claro qué es **Zod**, **W3C Trace Context (`traceparent`)**, la **Nomenclatura `wppes-mach-poc-dev-mxc1-*`**, **MACH**, **API-Led Connectivity**, **OIDC** y **AWS CDK v2**, con enlaces directos desde la cabecera y el pie de página.
 5. **Seguridad del Navegador (CSP)**:

@@ -4,9 +4,9 @@
   "main": "./dist/handler.js",
   "types": "./dist/handler.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && npx esbuild src/handler.ts --bundle --platform=node --target=node20 --external:@aws-sdk/* --outfile=dist-lambda/handler.js",
     "type-check": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test dist/handler.test.js",
+    "test": "node --test --experimental-test-coverage --test-coverage-include='dist/**' --test-coverage-lines=90 dist/handler.test.js",
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

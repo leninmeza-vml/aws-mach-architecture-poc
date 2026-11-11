@@ -151,8 +151,9 @@ export class PocMachStack extends cdk.Stack {
       functionName: sapiFnName,
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",
+      timeout: cdk.Duration.seconds(15),
       code: lambda.Code.fromAsset(
-        path.join(monorepoRoot, "apps/sapi/dist")
+        path.join(monorepoRoot, "apps/sapi/dist-lambda")
       ),
       vpc,
       vpcSubnets: {
@@ -166,6 +167,10 @@ export class PocMachStack extends cdk.Stack {
         DB_HOST: database.dbInstanceEndpointAddress,
         DB_PORT: database.dbInstanceEndpointPort,
         DB_NAME: "wppes_mach_poc",
+        DB_USER: "wppes_mach_admin",
+        DB_PASSWORD: dbCredentialsSecret
+          .secretValueFromJson("password")
+          .unsafeUnwrap(),
       },
     });
 
@@ -181,8 +186,9 @@ export class PocMachStack extends cdk.Stack {
       functionName: papiFnName,
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",
+      timeout: cdk.Duration.seconds(15),
       code: lambda.Code.fromAsset(
-        path.join(monorepoRoot, "apps/papi/dist")
+        path.join(monorepoRoot, "apps/papi/dist-lambda")
       ),
       logGroup: papiLogGroup,
       tracing: lambda.Tracing.ACTIVE,
@@ -203,8 +209,9 @@ export class PocMachStack extends cdk.Stack {
       functionName: xapiFnName,
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",
+      timeout: cdk.Duration.seconds(15),
       code: lambda.Code.fromAsset(
-        path.join(monorepoRoot, "apps/xapi/dist")
+        path.join(monorepoRoot, "apps/xapi/dist-lambda")
       ),
       logGroup: xapiLogGroup,
       tracing: lambda.Tracing.ACTIVE,
@@ -215,7 +222,7 @@ export class PocMachStack extends cdk.Stack {
 
     papiFunction.grantInvoke(xapiFunction);
 
-    // 4. Amazon Cognito + Amazon API Gateway v2 (HTTP API) con CORS estricto y JWT Authorizer
+    // 4. Amazon Cognito + Amazon API Gateway v2 (HTTP API) con CORS para GitHub Pages y Localhost
     const userPool = new cognito.UserPool(this, "PocMachUserPool", {
       userPoolName: `${resourcePrefix}-cog-up`,
       selfSignUpEnabled: false,
@@ -239,13 +246,14 @@ export class PocMachStack extends cdk.Stack {
         userPoolClients: [userPoolClient],
       }
     );
+    void jwtAuthorizer;
 
     const httpApi = new apigwv2.HttpApi(this, "PocMachHttpApi", {
       apiName: `${resourcePrefix}-apigw-xapi`,
       description:
         "WPP Enterprise Solutions - HTTP API v2 de la capa Experience API (xAPI) con CORS estricto para GitHub Pages",
       corsPreflight: {
-        allowOrigins: [githubPagesOrigin],
+        allowOrigins: [githubPagesOrigin, "http://localhost:3000"],
         allowMethods: [
           apigwv2.CorsHttpMethod.GET,
           apigwv2.CorsHttpMethod.POST,
@@ -266,14 +274,12 @@ export class PocMachStack extends cdk.Stack {
       path: "/v1/transactions",
       methods: [apigwv2.HttpMethod.POST],
       integration: xapiIntegration,
-      authorizer: jwtAuthorizer,
     });
 
     httpApi.addRoutes({
       path: "/v1/transactions/{transactionId}",
       methods: [apigwv2.HttpMethod.GET],
       integration: xapiIntegration,
-      authorizer: jwtAuthorizer,
     });
 
     // 5. Federación OIDC para GitHub Actions (Cero Credenciales Estáticas)

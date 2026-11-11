@@ -61,6 +61,18 @@ Para consultar las últimas 5 operaciones vía terminal: `grep "^## \[" wiki/log
 - Se eliminó la palabra `"Mermaid"` de los títulos visibles de los paneles 3 y 4 del acordeón y del desplegable de código fuente del diagrama.
 - Se incorporaron controles interactivos de zoom (`− Alejar`, `100%`, `+ Acercar`) y un modal `<dialog>` de pantalla completa con zoom hasta `350%` en `MermaidDiagramView` para visualizar ambos diagramas con total nitidez.
 
+## [2026-11-11] query | Consulta de grupos de logs de CloudWatch para las 3 funciones Lambda (xAPI, pAPI, sAPI)
+- Se consultó `wiki/entities/infra-cdk.md` y el grafo `codebase-memory` para detallar las vías de inspección de los CloudWatch Log Groups (`/aws/lambda/wppes-mach-poc-dev-mxc1-lmb-{xapi|papi|sapi}`) en `mx-central-1` mediante Consola Web AWS, CloudWatch Logs Insights (correlación por `traceparent`) y AWS CLI / CloudShell.
+
+## [2026-11-11] query | Diagnóstico de `Flujos de registros (0)` en `/aws/lambda/wppes-mach-poc-dev-mxc1-lmb-sapi`
+- Se inspeccionó la captura de CloudWatch en `mx-central-1` y el código de `infra/lib/poc-stack.ts`, `apps/xapi/src/handler.ts`, `apps/papi/src/handler.ts` y `apps/sapi/src/handler.ts`.
+- Se identificaron las causas raíz de `Flujos de registros (0)`: (1) CloudWatch solo crea *Log Streams* cuando la Lambda se ejecuta al menos una vez; (2) `HttpUserPoolAuthorizer` de API Gateway v2 rechaza tokens de demostración antes de invocar `xAPI`; (3) `xAPI` y `pAPI` importan los handlers en memoria en lugar de invocar las Lambdas remotas por AWS SDK, y ninguno de los 3 handlers emite `console.log` estructurado ni empaqueta sus dependencias (`esbuild`) en `dist/`.
+
+## [2026-11-11] update | Conexión Real E2E Web -> 3 Lambdas (CloudWatch Logs) -> RDS PostgreSQL, Pruebas BDD de Formularios y Puerta de Cobertura >= 90%
+- Se añadió en `AGENTS.md` la regla obligatoria pre-commit/pre-push de ejecutar todas las pruebas unitarias y BDD con un coverage mínimo del `90%` (`--experimental-test-coverage --test-coverage-lines=90`).
+- Se crearon `apps/web/src/flows/transaction-forms.ts` y la suite BDD `apps/web/src/flows/transaction-forms.bdd.test.ts` (7 escenarios `Given / When / Then` para ambos formularios `POST` y `GET` conectados al pipeline local `xAPI -> pAPI -> sAPI -> Database` con `100%` de cobertura de líneas).
+- Se habilitaron logs JSON estructurados con `traceparent` en `xAPI`, `pAPI` y `sAPI`, invocación remota Lambda-a-Lambda mediante `@aws-sdk/client-lambda`, empaquetado con `esbuild` (`dist-lambda/handler.js`) y creación automática de la tabla `transactions` en Amazon RDS PostgreSQL 16 (`wppes-mach-poc-dev-mxc1-rds-pg`).
+
 
 
 
