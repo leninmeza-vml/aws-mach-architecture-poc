@@ -13,6 +13,10 @@ import * as apigwv2Authorizers from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import * as iam from "aws-cdk-lib/aws-iam";
 
 export interface PocMachStackProps extends cdk.StackProps {
+  orgPrefix?: string;
+  workloadName?: string;
+  environmentName?: string;
+  regionShort?: string;
   githubOrgRepo?: string;
   githubPagesOrigin?: string;
 }
@@ -24,23 +28,41 @@ export class PocMachStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: PocMachStackProps) {
     super(scope, id, props);
 
+    const orgPrefix = props?.orgPrefix ?? "wppes";
+    const workloadName = props?.workloadName ?? "mach-poc";
+    const environmentName = props?.environmentName ?? "dev";
+    const regionShort = props?.regionShort ?? "use1";
+    const resourcePrefix = `${orgPrefix}-${workloadName}-${environmentName}-${regionShort}`;
+
     const githubOrgRepo =
       props?.githubOrgRepo ?? "leninmeza-vml/aws-mach-architecture-poc";
     const githubPagesOrigin =
       props?.githubPagesOrigin ?? "https://leninmeza-vml.github.io";
 
+    // Etiquetas corporativas estándar para WPP Enterprise Solutions
+    cdk.Tags.of(this).add("Organization", "WPP Enterprise Solutions");
+    cdk.Tags.of(this).add(
+      "OrganizationUrl",
+      "https://www.wpp.com/en/wpp-enterprise-solutions"
+    );
+    cdk.Tags.of(this).add("Workload", workloadName);
+    cdk.Tags.of(this).add("Environment", environmentName);
+    cdk.Tags.of(this).add("Architecture", "MACH-API-Led");
+    cdk.Tags.of(this).add("ManagedBy", "AWS-CDK-v2");
+
     // 1. Red (VPC) con subredes públicas y privadas aisladas
     const vpc = new ec2.Vpc(this, "PocMachVpc", {
+      vpcName: `${resourcePrefix}-vpc`,
       availabilityZones: ["us-east-1a", "us-east-1b"],
       natGateways: 0,
       subnetConfiguration: [
         {
-          name: "PublicSubnet",
+          name: `${resourcePrefix}-snet-public`,
           subnetType: ec2.SubnetType.PUBLIC,
           cidrMask: 24,
         },
         {
-          name: "PrivateIsolatedSubnet",
+          name: `${resourcePrefix}-snet-isolated`,
           subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
           cidrMask: 24,
         },
@@ -50,12 +72,14 @@ export class PocMachStack extends cdk.Stack {
     // Security Groups de privilegio mínimo
     const sapiLambdaSg = new ec2.SecurityGroup(this, "SapiLambdaSecurityGroup", {
       vpc,
+      securityGroupName: `${resourcePrefix}-sg-sapi-lambda`,
       description: "Security Group para la Lambda System API (sAPI)",
       allowAllOutbound: true,
     });
 
     const dbSg = new ec2.SecurityGroup(this, "DatabaseSecurityGroup", {
       vpc,
+      securityGroupName: `${resourcePrefix}-sg-rds-postgres`,
       description:
         "Security Group para RDS PostgreSQL - solo acepta puerto 5432 desde sAPI",
       allowAllOutbound: false,
@@ -72,10 +96,11 @@ export class PocMachStack extends cdk.Stack {
       this,
       "PocMachDbSecret",
       {
-        secretName: "poc-mach/rds/postgres-credentials",
-        description: "Credenciales administradas para PostgreSQL de PoC MACH",
+        secretName: `${orgPrefix}/${workloadName}/${environmentName}/${regionShort}/rds-postgres-credentials`,
+        description:
+          "Credenciales administradas para PostgreSQL de WPP Enterprise Solutions MACH PoC",
         generateSecretString: {
-          secretStringTemplate: JSON.stringify({ username: "mach_admin" }),
+          secretStringTemplate: JSON.stringify({ username: "wppes_mach_admin" }),
           generateStringKey: "password",
           excludePunctuation: true,
           includeSpace: false,
@@ -84,6 +109,7 @@ export class PocMachStack extends cdk.Stack {
     );
 
     const database = new rds.DatabaseInstance(this, "PocMachPostgresDb", {
+      instanceIdentifier: `${resourcePrefix}-rds-pg`,
       engine: rds.DatabaseInstanceEngine.postgres({
         version: rds.PostgresEngineVersion.VER_16_3,
       }),
@@ -97,7 +123,7 @@ export class PocMachStack extends cdk.Stack {
       },
       securityGroups: [dbSg],
       credentials: rds.Credentials.fromSecret(dbCredentialsSecret),
-      databaseName: "machpocdb",
+      databaseName: "wppes_mach_poc",
       allocatedStorage: 20,
       storageEncrypted: true,
       multiAz: false,
@@ -109,14 +135,18 @@ export class PocMachStack extends cdk.Stack {
     const monorepoRoot = path.resolve(__dirname, "../../..");
 
     // 3. Observabilidad centralizada (CloudWatch Logs) y Microservicios API-Led (sAPI, pAPI, xAPI)
+    const sapiFnName = `${resourcePrefix}-lmb-sapi`;
+    const papiFnName = `${resourcePrefix}-lmb-papi`;
+    const xapiFnName = `${resourcePrefix}-lmb-xapi`;
+
     const sapiLogGroup = new logs.LogGroup(this, "SapiLogGroup", {
-      logGroupName: "/aws/lambda/poc-mach-sapi",
+      logGroupName: `/aws/lambda/${sapiFnName}`,
       retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     const sapiFunction = new lambda.Function(this, "SapiLambda", {
-      functionName: "poc-mach-sapi",
+      functionName: sapiFnName,
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",
       code: lambda.Code.fromAsset(
@@ -133,20 +163,20 @@ export class PocMachStack extends cdk.Stack {
         DB_SECRET_ARN: dbCredentialsSecret.secretArn,
         DB_HOST: database.dbInstanceEndpointAddress,
         DB_PORT: database.dbInstanceEndpointPort,
-        DB_NAME: "machpocdb",
+        DB_NAME: "wppes_mach_poc",
       },
     });
 
     dbCredentialsSecret.grantRead(sapiFunction);
 
     const papiLogGroup = new logs.LogGroup(this, "PapiLogGroup", {
-      logGroupName: "/aws/lambda/poc-mach-papi",
+      logGroupName: `/aws/lambda/${papiFnName}`,
       retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     const papiFunction = new lambda.Function(this, "PapiLambda", {
-      functionName: "poc-mach-papi",
+      functionName: papiFnName,
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",
       code: lambda.Code.fromAsset(
@@ -162,13 +192,13 @@ export class PocMachStack extends cdk.Stack {
     sapiFunction.grantInvoke(papiFunction);
 
     const xapiLogGroup = new logs.LogGroup(this, "XapiLogGroup", {
-      logGroupName: "/aws/lambda/poc-mach-xapi",
+      logGroupName: `/aws/lambda/${xapiFnName}`,
       retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     const xapiFunction = new lambda.Function(this, "XapiLambda", {
-      functionName: "poc-mach-xapi",
+      functionName: xapiFnName,
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "handler.handler",
       code: lambda.Code.fromAsset(
@@ -185,14 +215,14 @@ export class PocMachStack extends cdk.Stack {
 
     // 4. Amazon Cognito + Amazon API Gateway v2 (HTTP API) con CORS estricto y JWT Authorizer
     const userPool = new cognito.UserPool(this, "PocMachUserPool", {
-      userPoolName: "poc-mach-users",
+      userPoolName: `${resourcePrefix}-cog-up`,
       selfSignUpEnabled: false,
       signInAliases: { email: true },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     const userPoolClient = userPool.addClient("PocMachWebClient", {
-      userPoolClientName: "poc-mach-web-client",
+      userPoolClientName: `${resourcePrefix}-cog-client-web`,
       authFlows: {
         userPassword: true,
         userSrp: true,
@@ -203,14 +233,15 @@ export class PocMachStack extends cdk.Stack {
       "PocMachCognitoJwtAuthorizer",
       userPool,
       {
+        authorizerName: `${resourcePrefix}-auth-cognito-jwt`,
         userPoolClients: [userPoolClient],
       }
     );
 
     const httpApi = new apigwv2.HttpApi(this, "PocMachHttpApi", {
-      apiName: "poc-mach-experience-http-api",
+      apiName: `${resourcePrefix}-apigw-xapi`,
       description:
-        "HTTP API v2 de la capa Experience API (xAPI) con CORS estricto para GitHub Pages",
+        "WPP Enterprise Solutions - HTTP API v2 de la capa Experience API (xAPI) con CORS estricto para GitHub Pages",
       corsPreflight: {
         allowOrigins: [githubPagesOrigin],
         allowMethods: [
@@ -257,7 +288,7 @@ export class PocMachStack extends cdk.Stack {
       this,
       "GitHubActionsOidcDeployRole",
       {
-        roleName: "poc-mach-github-actions-oidc-role",
+        roleName: `${orgPrefix}-${workloadName}-${environmentName}-global-iam-role-gh-oidc`,
         assumedBy: new iam.WebIdentityPrincipal(
           githubOidcProvider.openIdConnectProviderArn,
           {
@@ -270,7 +301,7 @@ export class PocMachStack extends cdk.Stack {
           }
         ),
         description:
-          "Rol asumible por GitHub Actions mediante OIDC sin claves estáticas",
+          "Rol asumible por GitHub Actions mediante OIDC sin claves estáticas para WPP Enterprise Solutions",
       }
     );
 

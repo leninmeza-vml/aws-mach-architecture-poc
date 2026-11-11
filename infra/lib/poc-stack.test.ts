@@ -25,10 +25,28 @@ describe("PocMachStack AWS CDK v2 IaC synthesis", () => {
     });
 
     template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
+      Name: "wppes-mach-poc-dev-use1-apigw-xapi",
       CorsConfiguration: Match.objectLike({
         AllowOrigins: ["https://leninmeza-vml.github.io"],
         AllowHeaders: Match.arrayWith(["Authorization", "traceparent"]),
       }),
+    });
+
+    template.hasResourceProperties("AWS::Lambda::Function", {
+      FunctionName: "wppes-mach-poc-dev-use1-lmb-xapi",
+    });
+
+    template.hasResourceProperties("AWS::Lambda::Function", {
+      FunctionName: "wppes-mach-poc-dev-use1-lmb-papi",
+    });
+
+    template.hasResourceProperties("AWS::Lambda::Function", {
+      FunctionName: "wppes-mach-poc-dev-use1-lmb-sapi",
+    });
+
+    template.hasResourceProperties("AWS::RDS::DBInstance", {
+      DBInstanceIdentifier: "wppes-mach-poc-dev-use1-rds-pg",
+      DBName: "wppes_mach_poc",
     });
   });
 });

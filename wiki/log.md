@@ -30,3 +30,9 @@ Para consultar las últimas 5 operaciones vía terminal: `grep "^## \[" wiki/log
 - Se creó la página `wiki/concepts/codebase-memory-and-gh-cli.md` y se actualizó `wiki/index.md`.
 - Se re-indexó el proyecto en `codebase-memory` y se ejecutó el despliegue de `apps/web` hacia GitHub Pages verificando los workflows con `gh run`.
 
+## [2026-11-11] update | Nomenclatura WPP Enterprise Solutions, separación en Pestañas y Diagrama Interactivo por Capas
+- Se estandarizaron todos los nombres de recursos AWS bajo la convención `wppes-mach-poc-dev-use1-*` en `infra/lib/poc-stack.ts`, `infra/bin/infra.ts` y `docs/DEPLOYMENT_GUIDE.md`.
+- Se rediseñó `apps/web/src/app/page.tsx` con identidad de **WPP Enterprise Solutions** (`https://www.wpp.com/en/wpp-enterprise-solutions`), navegación por pestañas con estados persistentes independientes para `POST` y `GET`, y un diagrama interactivo en vivo de las 6 capas hasta PostgreSQL.
+- Se re-indexó el grafo en `codebase-memory` y se desplegó la nueva versión en GitHub Pages.
+
+

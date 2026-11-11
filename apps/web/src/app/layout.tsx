@@ -2,9 +2,10 @@ import React from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "PoC MACH & API-Led Connectivity | AWS Headless Portal",
+  title:
+    "WPP Enterprise Solutions | PoC MACH & API-Led Connectivity on AWS",
   description:
-    "Frontend Headless en Next.js (Static Export) conectado a Experience API (xAPI) en AWS API Gateway v2",
+    "WPP Enterprise Solutions — Frontend Headless en Next.js (Static Export) conectado a Experience API (xAPI), Process API (pAPI) y System API (sAPI) en AWS",
 };
 
 const cspPolicy = [

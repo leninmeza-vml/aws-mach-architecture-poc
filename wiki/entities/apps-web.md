@@ -13,12 +13,16 @@ sources: [prompt-setup-poc-aws-vscode.md]
 - **Modo de compilación**: `output: 'export'` en `apps/web/next.config.js` para generación de HTML estático desplegable en **GitHub Pages**.
 
 ## Características Clave
-1. **Formularios Reactivos con Validación Zod**:
-   - **Formulario 1 (Crear Transacción)**: Valida con `CreateTransactionSchema` de `@poc-mach/types` y envía `POST /v1/transactions` a la `xAPI`.
-   - **Formulario 2 (Consultar Estado)**: Valida con `QueryStatusSchema` y envía `GET /v1/transactions/{transactionId}` a la `xAPI`.
-2. **Trazabilidad W3C**:
-   - Genera y adjunta `traceparent: 00-{traceId}-{spanId}-01` en cada petición mediante `createTraceparent()` de `@poc-mach/types`.
-3. **Seguridad del Navegador (CSP)**:
+1. **Identidad Corporativa WPP Enterprise Solutions**:
+   - Referencia explícita y enlace directo a `https://www.wpp.com/en/wpp-enterprise-solutions` en cabecera y pie de página.
+2. **Separación por Pestañas (`Tabs`) con Estado Persistente Independiente**:
+   - **Pestaña 1 (`POST /v1/transactions`)**: Mantiene su propio estado (`postState`: respuesta `201`, traza `traceparent`, animación por capas e historial `createdHistory`).
+   - **Pestaña 2 (`GET /v1/transactions/{id}`)**: Mantiene su propio estado independiente (`getState`: respuesta `200`, traza `traceparent`, animación por capas e historial `queriedHistory`) y permite seleccionar con un clic cualquier UUID creado en la Pestaña 1 sin borrar ninguna de las dos respuestas.
+   - **Pestaña 3 (`Nomenclatura Estándar WPP & Setup AWS SSO`)**: Catálogo interactivo de recursos `wppes-mach-poc-dev-use1-*` y guía de comandos CLI.
+3. **Diagrama Interactivo en Tiempo Real por Capas (6 Saltos)**:
+   - Muestra el recorrido en vivo `Headless SPA -> API Gateway + Cognito -> xAPI -> pAPI -> sAPI (VPC) -> RDS PostgreSQL (5432)`.
+   - Permite hacer clic en cualquier nodo del diagrama para inspeccionar el `spanId` W3C, headers, evaluación de reglas de negocio y la sentencia SQL parametrizada ejecutada.
+4. **Seguridad del Navegador (CSP)**:
    - `apps/web/src/app/layout.tsx` incluye la directiva `Content-Security-Policy` restringiendo `connect-src` a los dominios de Amazon API Gateway (`*.execute-api.us-east-1.amazonaws.com`) y Amazon Cognito (`*.amazoncognito.com`).
 
 ## Relaciones
