@@ -17,6 +17,7 @@ aws sso login --profile poc-mach-dev
 ```
 Esto emite credenciales temporales de corta duración gestionadas por AWS CLI v2.
 
-## 2. Entorno CI/CD (GitHub Actions + OpenID Connect)
-En `.github/workflows/deploy-infra-cdk.yml`, GitHub Actions solicita un token OIDC firmado por `token.actions.githubusercontent.com` y asume un rol IAM en AWS mediante `aws-actions/configure-aws-credentials@v4`.
-- El rol IAM en [../entities/infra-cdk.md](../entities/infra-cdk.md) restringe la condición `token.actions.githubusercontent.com:sub` exclusivamente al repositorio autorizado (`repo:<org>/<repo>:*`).
+## 2. Entorno CI/CD (GitHub Actions + OpenID Connect en Cuenta `723949187900`)
+En `.github/workflows/deploy-infra-cdk.yml`, GitHub Actions solicita un token OIDC firmado por `token.actions.githubusercontent.com` y asume el rol IAM `arn:aws:iam::723949187900:role/wppes-mach-poc-dev-global-iam-role-gh-oidc` en la región **México (Centro) — Querétaro (`mx-central-1`)** mediante `aws-actions/configure-aws-credentials@v4`.
+- El proveedor OIDC (`arn:aws:iam::723949187900:oidc-provider/token.actions.githubusercontent.com`) y el rol `wppes-mach-poc-dev-global-iam-role-gh-oidc` fueron aprovisionados directamente en IAM sin crear una organización en AWS Organizations, preservando el **Plan Gratuito (AWS Free Tier)** de la cuenta `723949187900`.
+- El secreto `AWS_OIDC_ROLE_ARN` está registrado en GitHub Actions para el repositorio `leninmeza-vml/aws-mach-architecture-poc`.

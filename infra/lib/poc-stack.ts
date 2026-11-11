@@ -19,6 +19,7 @@ export interface PocMachStackProps extends cdk.StackProps {
   regionShort?: string;
   githubOrgRepo?: string;
   githubPagesOrigin?: string;
+  createOidcResources?: boolean;
 }
 
 export class PocMachStack extends cdk.Stack {
@@ -276,39 +277,45 @@ export class PocMachStack extends cdk.Stack {
     });
 
     // 5. Federación OIDC para GitHub Actions (Cero Credenciales Estáticas)
-    const githubOidcProvider = new iam.OpenIdConnectProvider(
-      this,
-      "GitHubActionsOidcProvider",
-      {
-        url: "https://token.actions.githubusercontent.com",
-        clientIds: ["sts.amazonaws.com"],
-      }
-    );
+    const shouldCreateOidc =
+      props?.createOidcResources ??
+      process.env.CREATE_OIDC_RESOURCES !== "false";
 
-    const githubActionsDeployRole = new iam.Role(
-      this,
-      "GitHubActionsOidcDeployRole",
-      {
-        roleName: `${orgPrefix}-${workloadName}-${environmentName}-global-iam-role-gh-oidc`,
-        assumedBy: new iam.WebIdentityPrincipal(
-          githubOidcProvider.openIdConnectProviderArn,
-          {
-            StringEquals: {
-              "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-            },
-            StringLike: {
-              "token.actions.githubusercontent.com:sub": `repo:${githubOrgRepo}:*`,
-            },
-          }
-        ),
-        description:
-          "Rol asumible por GitHub Actions mediante OIDC sin claves estáticas para WPP Enterprise Solutions",
-      }
-    );
+    if (shouldCreateOidc) {
+      const githubOidcProvider = new iam.OpenIdConnectProvider(
+        this,
+        "GitHubActionsOidcProvider",
+        {
+          url: "https://token.actions.githubusercontent.com",
+          clientIds: ["sts.amazonaws.com"],
+        }
+      );
 
-    githubActionsDeployRole.addManagedPolicy(
-      iam.ManagedPolicy.fromAwsManagedPolicyName("PowerUserAccess")
-    );
+      const githubActionsDeployRole = new iam.Role(
+        this,
+        "GitHubActionsOidcDeployRole",
+        {
+          roleName: `${orgPrefix}-${workloadName}-${environmentName}-global-iam-role-gh-oidc`,
+          assumedBy: new iam.WebIdentityPrincipal(
+            githubOidcProvider.openIdConnectProviderArn,
+            {
+              StringEquals: {
+                "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+              },
+              StringLike: {
+                "token.actions.githubusercontent.com:sub": `repo:${githubOrgRepo}:*`,
+              },
+            }
+          ),
+          description:
+            "Rol asumible por GitHub Actions mediante OIDC sin claves estáticas para WPP Enterprise Solutions",
+        }
+      );
+
+      githubActionsDeployRole.addManagedPolicy(
+        iam.ManagedPolicy.fromAwsManagedPolicyName("PowerUserAccess")
+      );
+    }
 
     this.httpApiUrl = new cdk.CfnOutput(this, "HttpApiEndpoint", {
       value: httpApi.apiEndpoint,

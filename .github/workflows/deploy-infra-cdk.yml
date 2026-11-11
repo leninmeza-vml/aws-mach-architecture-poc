@@ -32,11 +32,22 @@ jobs:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Verify OIDC Session & Target Region (mx-central-1)
+        run: |
+          aws sts get-caller-identity
+          echo "Target AWS Region: $AWS_REGION"
+
       - name: Install dependencies & build packages
         run: |
           pnpm install --frozen-lockfile=false
           pnpm build
 
-      - name: Deploy AWS CDK Stack
+      - name: Bootstrap & Deploy AWS CDK Stack in Querétaro (mx-central-1)
         working-directory: ./infra
-        run: npx cdk deploy --require-approval never
+        env:
+          CREATE_OIDC_RESOURCES: "false"
+          CDK_DEFAULT_REGION: mx-central-1
+        run: |
+          npx cdk bootstrap --region mx-central-1
+          npx cdk deploy WppesMachPocDevStack --region mx-central-1 --require-approval never --outputs-file cdk-outputs.json
+          cat cdk-outputs.json

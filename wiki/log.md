@@ -40,5 +40,11 @@ Para consultar las últimas 5 operaciones vía terminal: `grep "^## \[" wiki/log
 - Se documentó cómo evitar la pérdida del AWS Free Plan (no habilitar AWS Organizations al usar IAM Identity Center; usar *Account Instance* o federación OIDC + CloudShell).
 - Se re-indexó el repositorio en `codebase-memory` y se desplegó la actualización a GitHub Pages.
 
+## [2026-11-11] update | Configuración de Proveedor OIDC y Rol IAM en Cuenta 723949187900 para Despliegue en Querétaro (mx-central-1)
+- Se creó el proveedor OIDC `arn:aws:iam::723949187900:oidc-provider/token.actions.githubusercontent.com` (Audience: `sts.amazonaws.com`) en IAM de la cuenta `723949187900` (`ljmeza-vml`).
+- Se creó el rol IAM `arn:aws:iam::723949187900:role/wppes-mach-poc-dev-global-iam-role-gh-oidc` con política de confianza restringida a `repo:leninmeza-vml/aws-mach-architecture-poc:*`.
+- Se configuró el secreto `AWS_OIDC_ROLE_ARN` en GitHub Actions mediante `gh secret set` y se actualizó `deploy-infra-cdk.yml` para ejecutar `cdk bootstrap` y `cdk deploy` en `mx-central-1`.
+
+
 
 
