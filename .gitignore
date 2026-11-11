@@ -4,6 +4,7 @@ dist/
 out/
 .turbo/
 cdk.out/
+cdk.context.json
 coverage/
 *.log
 .DS_Store

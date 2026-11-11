@@ -31,7 +31,7 @@ export class PocMachStack extends cdk.Stack {
 
     // 1. Red (VPC) con subredes públicas y privadas aisladas
     const vpc = new ec2.Vpc(this, "PocMachVpc", {
-      maxAzs: 2,
+      availabilityZones: ["us-east-1a", "us-east-1b"],
       natGateways: 0,
       subnetConfiguration: [
         {

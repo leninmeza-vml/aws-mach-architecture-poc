@@ -7,7 +7,7 @@
     "type-check": "tsc -p tsconfig.json --noEmit",
     "test": "node --test dist/lib/poc-stack.test.js",
     "lint": "tsc -p tsconfig.json --noEmit",
-    "synth": "cdk synth"
+    "synth": "cdk synth --no-lookups"
   },
   "dependencies": {
     "@poc-mach/papi": "workspace:*",
