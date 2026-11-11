@@ -48,8 +48,14 @@ function logSapiEvent(
 
 export async function handler(
   event: SapiCommand,
-  repo: TransactionRepository = defaultRepository
+  repoOrLambdaContext?: TransactionRepository | Record<string, unknown>
 ): Promise<SapiResult> {
+  const repo: TransactionRepository =
+    repoOrLambdaContext &&
+    typeof (repoOrLambdaContext as TransactionRepository).insertTransaction ===
+      "function"
+      ? (repoOrLambdaContext as TransactionRepository)
+      : defaultRepository;
   const trace = parseTraceparent(event.traceparent);
 
   logSapiEvent("INFO", "System API (sAPI) invocada", {

@@ -103,8 +103,12 @@ export function evaluateBusinessRules(amount: number): {
 
 export async function handler(
   event: PapiRequest,
-  sapiInvoker: SapiInvoker = defaultSapiInvoker
+  sapiInvokerOrLambdaContext?: SapiInvoker | Record<string, unknown>
 ): Promise<PapiResponse> {
+  const sapiInvoker: SapiInvoker =
+    typeof sapiInvokerOrLambdaContext === "function"
+      ? sapiInvokerOrLambdaContext
+      : defaultSapiInvoker;
   const incomingTrace = parseTraceparent(event.traceparent);
   const childTrace = createTraceparent(incomingTrace.traceId);
 

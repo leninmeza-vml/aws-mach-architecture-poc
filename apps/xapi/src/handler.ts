@@ -93,8 +93,12 @@ export function validateBearerToken(authHeader?: string): boolean {
 
 export async function handler(
   event: ApiGatewayV2HttpEvent,
-  papiInvoker: PapiInvoker = defaultPapiInvoker
+  papiInvokerOrLambdaContext?: PapiInvoker | Record<string, unknown>
 ): Promise<ApiGatewayV2HttpResponse> {
+  const papiInvoker: PapiInvoker =
+    typeof papiInvokerOrLambdaContext === "function"
+      ? papiInvokerOrLambdaContext
+      : defaultPapiInvoker;
   const normalizedHeaders: Record<string, string | undefined> = {};
   for (const [k, v] of Object.entries(event.headers ?? {})) {
     normalizedHeaders[k.toLowerCase()] = v;
