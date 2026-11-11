@@ -12,17 +12,17 @@
   },
   "dependencies": {
     "@poc-mach/types": "workspace:*",
-    "next": "^14.2.15",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "next": "^16.4.5",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@poc-mach/tsconfig": "workspace:*",
     "@poc-mach/xapi": "workspace:*",
     "@types/node": "^20.14.0",
-    "@types/react": "^18.3.5",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "typescript": "^5.5.4"
   }
 }
