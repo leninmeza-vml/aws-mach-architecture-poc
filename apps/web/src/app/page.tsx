@@ -11,7 +11,7 @@ import {
 
 const XAPI_BASE_URL =
   process.env.NEXT_PUBLIC_XAPI_URL ||
-  "https://wppes-mach-poc-dev-use1-apigw-xapi.execute-api.us-east-1.amazonaws.com";
+  "https://wppes-mach-poc-dev-mxc1-apigw-xapi.execute-api.mx-central-1.amazonaws.com";
 
 type ActiveTab = "post" | "get" | "naming";
 type HopStatus = "idle" | "processing" | "success" | "error";
@@ -44,86 +44,86 @@ export interface OperationExecutionState {
 const WPP_AWS_NAMING_CATALOG = [
   {
     layer: "Identidad Local (CLI)",
-    service: "AWS IAM Identity Center (SSO)",
+    service: "AWS IAM Identity Center (Account Instance)",
     resourceName: "wppes-mach-poc-dev",
-    scope: "Local / VS Code MCP",
-    purpose: "Perfil SSO sin claves estáticas (aws sso login)",
+    scope: "mx-central-1 (Querétaro)",
+    purpose: "Perfil SSO de instancia de cuenta (preserva AWS Free Tier)",
   },
   {
     layer: "IaC Stack",
     service: "AWS CloudFormation / CDK v2",
-    resourceName: "wppes-mach-poc-dev-use1-stack",
-    scope: "us-east-1",
+    resourceName: "wppes-mach-poc-dev-mxc1-stack",
+    scope: "mx-central-1 (Querétaro)",
     purpose: "Stack declarativo principal de la PoC MACH",
   },
   {
     layer: "Red Aislada",
     service: "Amazon VPC",
-    resourceName: "wppes-mach-poc-dev-use1-vpc",
-    scope: "us-east-1 (2 AZs)",
+    resourceName: "wppes-mach-poc-dev-mxc1-vpc",
+    scope: "mx-central-1 (2 AZs)",
     purpose: "Subredes públicas y privadas aisladas (PRIVATE_ISOLATED)",
   },
   {
     layer: "Autenticación",
     service: "Amazon Cognito User Pool",
-    resourceName: "wppes-mach-poc-dev-use1-cog-up",
-    scope: "us-east-1",
+    resourceName: "wppes-mach-poc-dev-mxc1-cog-up",
+    scope: "mx-central-1",
     purpose: "Emisión de tokens OIDC / Bearer JWT",
   },
   {
     layer: "Borde API",
     service: "Amazon API Gateway v2 (HTTP API)",
-    resourceName: "wppes-mach-poc-dev-use1-apigw-xapi",
-    scope: "Edge / Público",
+    resourceName: "wppes-mach-poc-dev-mxc1-apigw-xapi",
+    scope: "Edge / Público (mxc1)",
     purpose: "CORS estricto GitHub Pages + Cognito JWT Authorizer",
   },
   {
     layer: "Experience API (xAPI)",
     service: "AWS Lambda (Node.js 20)",
-    resourceName: "wppes-mach-poc-dev-use1-lmb-xapi",
-    scope: "Managed Runtime",
+    resourceName: "wppes-mach-poc-dev-mxc1-lmb-xapi",
+    scope: "Managed Runtime (mxc1)",
     purpose: "Validación de contrato Zod y propagación W3C traceparent",
   },
   {
     layer: "Process API (pAPI)",
     service: "AWS Lambda (Node.js 20)",
-    resourceName: "wppes-mach-poc-dev-use1-lmb-papi",
-    scope: "Managed Runtime",
+    resourceName: "wppes-mach-poc-dev-mxc1-lmb-papi",
+    scope: "Managed Runtime (mxc1)",
     purpose: "Orquestación y reglas de riesgo transaccional (LOW/MEDIUM/HIGH)",
   },
   {
     layer: "System API (sAPI)",
     service: "AWS Lambda (Node.js 20 en VPC)",
-    resourceName: "wppes-mach-poc-dev-use1-lmb-sapi",
-    scope: "Subred Privada Aislada",
+    resourceName: "wppes-mach-poc-dev-mxc1-lmb-sapi",
+    scope: "Subred Privada Aislada (mxc1)",
     purpose: "Único componente con acceso TCP 5432 hacia PostgreSQL",
   },
   {
     layer: "Firewall sAPI",
     service: "AWS EC2 Security Group",
-    resourceName: "wppes-mach-poc-dev-use1-sg-sapi-lambda",
-    scope: "VPC Security",
+    resourceName: "wppes-mach-poc-dev-mxc1-sg-sapi-lambda",
+    scope: "VPC Security (mxc1)",
     purpose: "Identidad de red de la función Lambda sAPI",
   },
   {
     layer: "Firewall Base de Datos",
     service: "AWS EC2 Security Group",
-    resourceName: "wppes-mach-poc-dev-use1-sg-rds-postgres",
-    scope: "VPC Security",
+    resourceName: "wppes-mach-poc-dev-mxc1-sg-rds-postgres",
+    scope: "VPC Security (mxc1)",
     purpose: "Permite ingreso en puerto 5432 exclusivamente desde sg-sapi-lambda",
   },
   {
     layer: "Secretos",
     service: "AWS Secrets Manager",
-    resourceName: "wppes/mach-poc/dev/use1/rds-postgres-credentials",
-    scope: "us-east-1",
+    resourceName: "wppes/mach-poc/dev/mxc1/rds-postgres-credentials",
+    scope: "mx-central-1",
     purpose: "Credenciales rotadas del clúster PostgreSQL",
   },
   {
     layer: "Persistencia (SoR)",
     service: "Amazon RDS PostgreSQL 16",
-    resourceName: "wppes-mach-poc-dev-use1-rds-pg",
-    scope: "Subred Privada Aislada",
+    resourceName: "wppes-mach-poc-dev-mxc1-rds-pg",
+    scope: "Subred Privada Aislada (mxc1)",
     purpose: "Base de datos relacional cifrada (DB: wppes_mach_poc)",
   },
   {
@@ -158,13 +158,13 @@ function buildInitialHops(mode: "POST" | "GET"): LayerHopTrace[] {
       id: "apigw",
       layerCode: "2. API Gateway + Cognito",
       title: "HTTP API v2 & JWT Auth",
-      awsResourceName: "wppes-mach-poc-dev-use1-apigw-xapi",
-      subnetOrZone: "AWS Edge (us-east-1)",
+      awsResourceName: "wppes-mach-poc-dev-mxc1-apigw-xapi",
+      subnetOrZone: "AWS Edge (mx-central-1 Querétaro)",
       status: "idle",
       spanId: "----------------",
       traceparent: "Pendiente de ejecución",
       latencyMs: 0,
-      summary: "Verifica firma Bearer JWT contra wppes-mach-poc-dev-use1-cog-up y políticas CORS.",
+      summary: "Verifica firma Bearer JWT contra wppes-mach-poc-dev-mxc1-cog-up y políticas CORS.",
       artifactTitle: "Inspección de Autorización JWT y CORS",
       artifactContent: "// Esperando solicitud HTTP hacia API Gateway v2...",
     },
@@ -172,22 +172,22 @@ function buildInitialHops(mode: "POST" | "GET"): LayerHopTrace[] {
       id: "xapi",
       layerCode: "3. Experience API (xAPI)",
       title: "Lambda Experience Layer",
-      awsResourceName: "wppes-mach-poc-dev-use1-lmb-xapi",
-      subnetOrZone: "AWS Lambda Managed",
+      awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-xapi",
+      subnetOrZone: "AWS Lambda (mx-central-1)",
       status: "idle",
       spanId: "----------------",
       traceparent: "Pendiente de ejecución",
       latencyMs: 0,
       summary: "Adapta el contrato del canal web, preserva traceId y delega a pAPI.",
       artifactTitle: "Contexto de Ejecución en xAPI",
-      artifactContent: "// Esperando invocación de wppes-mach-poc-dev-use1-lmb-xapi...",
+      artifactContent: "// Esperando invocación de wppes-mach-poc-dev-mxc1-lmb-xapi...",
     },
     {
       id: "papi",
       layerCode: "4. Process API (pAPI)",
       title: "Lambda Business Orchestrator",
-      awsResourceName: "wppes-mach-poc-dev-use1-lmb-papi",
-      subnetOrZone: "AWS Lambda Managed",
+      awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-papi",
+      subnetOrZone: "AWS Lambda (mx-central-1)",
       status: "idle",
       spanId: "----------------",
       traceparent: "Pendiente de ejecución",
@@ -197,27 +197,27 @@ function buildInitialHops(mode: "POST" | "GET"): LayerHopTrace[] {
           ? "Evalúa reglas de negocio antifraude (LOW, MEDIUM, HIGH) y asigna estado."
           : "Orquesta la consulta de estado transaccional hacia la capa de sistema.",
       artifactTitle: "Motor de Reglas de Negocio en pAPI",
-      artifactContent: "// Esperando orquestación en wppes-mach-poc-dev-use1-lmb-papi...",
+      artifactContent: "// Esperando orquestación en wppes-mach-poc-dev-mxc1-lmb-papi...",
     },
     {
       id: "sapi",
       layerCode: "5. System API (sAPI)",
       title: "Lambda System Layer (VPC)",
-      awsResourceName: "wppes-mach-poc-dev-use1-lmb-sapi",
-      subnetOrZone: "VPC Subred Privada Aislada",
+      awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-sapi",
+      subnetOrZone: "VPC Subred Privada Aislada (mxc1)",
       status: "idle",
       spanId: "----------------",
       traceparent: "Pendiente de ejecución",
       latencyMs: 0,
       summary: "Lee secreto en Secrets Manager y abre conexión segura hacia RDS (puerto 5432).",
       artifactTitle: "Comando Interno de System API",
-      artifactContent: "// Esperando invocación privada en wppes-mach-poc-dev-use1-lmb-sapi...",
+      artifactContent: "// Esperando invocación privada en wppes-mach-poc-dev-mxc1-lmb-sapi...",
     },
     {
       id: "rds",
       layerCode: "6. Base de Datos (SoR)",
       title: "Amazon RDS PostgreSQL 16",
-      awsResourceName: "wppes-mach-poc-dev-use1-rds-pg",
+      awsResourceName: "wppes-mach-poc-dev-mxc1-rds-pg",
       subnetOrZone: "PRIVATE_ISOLATED (TCP 5432)",
       status: "idle",
       spanId: "----------------",
@@ -354,8 +354,8 @@ export default function HomePage() {
         id: "apigw",
         layerCode: "2. API Gateway + Cognito",
         title: "HTTP API v2 & JWT Auth",
-        awsResourceName: "wppes-mach-poc-dev-use1-apigw-xapi",
-        subnetOrZone: "AWS Edge (us-east-1)",
+        awsResourceName: "wppes-mach-poc-dev-mxc1-apigw-xapi",
+        subnetOrZone: "AWS Edge (mx-central-1 Querétaro)",
         spanId: spanApigw.spanId,
         traceparent: spanApigw.raw,
         latencyMs: 12,
@@ -363,9 +363,9 @@ export default function HomePage() {
         artifactTitle: "2. Validación en API Gateway v2 + Cognito Authorizer",
         artifactContent: JSON.stringify(
           {
-            apiGatewayName: "wppes-mach-poc-dev-use1-apigw-xapi",
-            authorizer: "wppes-mach-poc-dev-use1-auth-cognito-jwt",
-            userPool: "wppes-mach-poc-dev-use1-cog-up",
+            apiGatewayName: "wppes-mach-poc-dev-mxc1-apigw-xapi",
+            authorizer: "wppes-mach-poc-dev-mxc1-auth-cognito-jwt",
+            userPool: "wppes-mach-poc-dev-mxc1-cog-up",
             corsOriginAllowed: "https://leninmeza-vml.github.io",
             routeMatched: "POST /v1/transactions",
             jwtVerified: true,
@@ -378,8 +378,8 @@ export default function HomePage() {
         id: "xapi",
         layerCode: "3. Experience API (xAPI)",
         title: "Lambda Experience Layer",
-        awsResourceName: "wppes-mach-poc-dev-use1-lmb-xapi",
-        subnetOrZone: "AWS Lambda Managed",
+        awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-xapi",
+        subnetOrZone: "AWS Lambda (mx-central-1)",
         spanId: spanXapi.spanId,
         traceparent: spanXapi.raw,
         latencyMs: 19,
@@ -387,8 +387,8 @@ export default function HomePage() {
         artifactTitle: "3. Delegación desde xAPI hacia pAPI (Evento Interno)",
         artifactContent: JSON.stringify(
           {
-            sourceLambda: "wppes-mach-poc-dev-use1-lmb-xapi",
-            targetLambda: "wppes-mach-poc-dev-use1-lmb-papi",
+            sourceLambda: "wppes-mach-poc-dev-mxc1-lmb-xapi",
+            targetLambda: "wppes-mach-poc-dev-mxc1-lmb-papi",
             operation: "PROCESS_CREATE_TRANSACTION",
             traceparent: spanXapi.raw,
             payload: parsed.data,
@@ -401,8 +401,8 @@ export default function HomePage() {
         id: "papi",
         layerCode: "4. Process API (pAPI)",
         title: "Lambda Business Orchestrator",
-        awsResourceName: "wppes-mach-poc-dev-use1-lmb-papi",
-        subnetOrZone: "AWS Lambda Managed",
+        awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-papi",
+        subnetOrZone: "AWS Lambda (mx-central-1)",
         spanId: spanPapi.spanId,
         traceparent: spanPapi.raw,
         latencyMs: 27,
@@ -410,13 +410,13 @@ export default function HomePage() {
         artifactTitle: "4. Evaluación de Reglas de Negocio en pAPI (apps/papi)",
         artifactContent: JSON.stringify(
           {
-            orchestratorLambda: "wppes-mach-poc-dev-use1-lmb-papi",
+            orchestratorLambda: "wppes-mach-poc-dev-mxc1-lmb-papi",
             evaluatedRule:
               "amount > 50000 => HIGH/PENDING | amount > 10000 => MEDIUM/APPROVED | else => LOW/APPROVED",
             inputAmount: parsed.data.amount,
             computedRiskLevel: riskLevel,
             computedStatus,
-            nextHop: "wppes-mach-poc-dev-use1-lmb-sapi (PERSIST_TRANSACTION)",
+            nextHop: "wppes-mach-poc-dev-mxc1-lmb-sapi (PERSIST_TRANSACTION)",
             traceparent: spanPapi.raw,
           },
           null,
@@ -427,8 +427,8 @@ export default function HomePage() {
         id: "sapi",
         layerCode: "5. System API (sAPI)",
         title: "Lambda System Layer (VPC)",
-        awsResourceName: "wppes-mach-poc-dev-use1-lmb-sapi",
-        subnetOrZone: "VPC Subred Privada Aislada",
+        awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-sapi",
+        subnetOrZone: "VPC Subred Privada Aislada (mxc1)",
         spanId: spanSapi.spanId,
         traceparent: spanSapi.raw,
         latencyMs: 34,
@@ -436,12 +436,12 @@ export default function HomePage() {
         artifactTitle: "5. Ejecución Aislada en VPC Privada (sAPI -> Secrets Manager)",
         artifactContent: JSON.stringify(
           {
-            systemLambda: "wppes-mach-poc-dev-use1-lmb-sapi",
-            vpc: "wppes-mach-poc-dev-use1-vpc",
-            subnet: "wppes-mach-poc-dev-use1-snet-isolated",
-            sourceSecurityGroup: "wppes-mach-poc-dev-use1-sg-sapi-lambda",
-            targetSecurityGroup: "wppes-mach-poc-dev-use1-sg-rds-postgres (TCP 5432)",
-            secretId: "wppes/mach-poc/dev/use1/rds-postgres-credentials",
+            systemLambda: "wppes-mach-poc-dev-mxc1-lmb-sapi",
+            vpc: "wppes-mach-poc-dev-mxc1-vpc",
+            subnet: "wppes-mach-poc-dev-mxc1-snet-isolated",
+            sourceSecurityGroup: "wppes-mach-poc-dev-mxc1-sg-sapi-lambda",
+            targetSecurityGroup: "wppes-mach-poc-dev-mxc1-sg-rds-postgres (TCP 5432)",
+            secretId: "wppes/mach-poc/dev/mxc1/rds-postgres-credentials",
             action: "PERSIST_TRANSACTION",
           },
           null,
@@ -452,14 +452,14 @@ export default function HomePage() {
         id: "rds",
         layerCode: "6. Base de Datos (SoR)",
         title: "Amazon RDS PostgreSQL 16",
-        awsResourceName: "wppes-mach-poc-dev-use1-rds-pg",
+        awsResourceName: "wppes-mach-poc-dev-mxc1-rds-pg",
         subnetOrZone: "PRIVATE_ISOLATED (TCP 5432)",
         spanId: spanRds.spanId,
         traceparent: spanRds.raw,
         latencyMs: 18,
         summary: "Registro insertado en tabla transactions y confirmado a través de las capas.",
         artifactTitle: "6. Sentencia SQL Parametrizada en PostgreSQL (wppes_mach_poc)",
-        artifactContent: `-- Instancia: wppes-mach-poc-dev-use1-rds-pg (DB: wppes_mach_poc)
+        artifactContent: `-- Instancia: wppes-mach-poc-dev-mxc1-rds-pg (DB: wppes_mach_poc)
 INSERT INTO transactions (
   transaction_id, customer_id, amount, currency, concept,
   status, risk_level, trace_id, created_at, updated_at
@@ -595,8 +595,8 @@ INSERT INTO transactions (
         id: "apigw",
         layerCode: "2. API Gateway + Cognito",
         title: "HTTP API v2 & JWT Auth",
-        awsResourceName: "wppes-mach-poc-dev-use1-apigw-xapi",
-        subnetOrZone: "AWS Edge (us-east-1)",
+        awsResourceName: "wppes-mach-poc-dev-mxc1-apigw-xapi",
+        subnetOrZone: "AWS Edge (mx-central-1 Querétaro)",
         spanId: spanApigw.spanId,
         traceparent: spanApigw.raw,
         latencyMs: 10,
@@ -604,7 +604,7 @@ INSERT INTO transactions (
         artifactTitle: "2. Enrutamiento GET en API Gateway v2",
         artifactContent: JSON.stringify(
           {
-            apiGatewayName: "wppes-mach-poc-dev-use1-apigw-xapi",
+            apiGatewayName: "wppes-mach-poc-dev-mxc1-apigw-xapi",
             routeMatched: "GET /v1/transactions/{transactionId}",
             pathParameters: { transactionId: parsed.data.transactionId },
             jwtVerified: true,
@@ -617,8 +617,8 @@ INSERT INTO transactions (
         id: "xapi",
         layerCode: "3. Experience API (xAPI)",
         title: "Lambda Experience Layer",
-        awsResourceName: "wppes-mach-poc-dev-use1-lmb-xapi",
-        subnetOrZone: "AWS Lambda Managed",
+        awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-xapi",
+        subnetOrZone: "AWS Lambda (mx-central-1)",
         spanId: spanXapi.spanId,
         traceparent: spanXapi.raw,
         latencyMs: 14,
@@ -626,8 +626,8 @@ INSERT INTO transactions (
         artifactTitle: "3. Delegación de Consulta desde xAPI hacia pAPI",
         artifactContent: JSON.stringify(
           {
-            sourceLambda: "wppes-mach-poc-dev-use1-lmb-xapi",
-            targetLambda: "wppes-mach-poc-dev-use1-lmb-papi",
+            sourceLambda: "wppes-mach-poc-dev-mxc1-lmb-xapi",
+            targetLambda: "wppes-mach-poc-dev-mxc1-lmb-papi",
             operation: "PROCESS_QUERY_STATUS",
             traceparent: spanXapi.raw,
             payload: { transactionId: parsed.data.transactionId },
@@ -640,8 +640,8 @@ INSERT INTO transactions (
         id: "papi",
         layerCode: "4. Process API (pAPI)",
         title: "Lambda Business Orchestrator",
-        awsResourceName: "wppes-mach-poc-dev-use1-lmb-papi",
-        subnetOrZone: "AWS Lambda Managed",
+        awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-papi",
+        subnetOrZone: "AWS Lambda (mx-central-1)",
         spanId: spanPapi.spanId,
         traceparent: spanPapi.raw,
         latencyMs: 16,
@@ -649,9 +649,9 @@ INSERT INTO transactions (
         artifactTitle: "4. Orquestación de Lectura en pAPI",
         artifactContent: JSON.stringify(
           {
-            orchestratorLambda: "wppes-mach-poc-dev-use1-lmb-papi",
+            orchestratorLambda: "wppes-mach-poc-dev-mxc1-lmb-papi",
             operation: "PROCESS_QUERY_STATUS",
-            nextHop: "wppes-mach-poc-dev-use1-lmb-sapi (GET_TRANSACTION_BY_ID)",
+            nextHop: "wppes-mach-poc-dev-mxc1-lmb-sapi (GET_TRANSACTION_BY_ID)",
             traceparent: spanPapi.raw,
           },
           null,
@@ -662,8 +662,8 @@ INSERT INTO transactions (
         id: "sapi",
         layerCode: "5. System API (sAPI)",
         title: "Lambda System Layer (VPC)",
-        awsResourceName: "wppes-mach-poc-dev-use1-lmb-sapi",
-        subnetOrZone: "VPC Subred Privada Aislada",
+        awsResourceName: "wppes-mach-poc-dev-mxc1-lmb-sapi",
+        subnetOrZone: "VPC Subred Privada Aislada (mxc1)",
         spanId: spanSapi.spanId,
         traceparent: spanSapi.raw,
         latencyMs: 22,
@@ -671,8 +671,8 @@ INSERT INTO transactions (
         artifactTitle: "5. Consulta Aislada en System API (VPC)",
         artifactContent: JSON.stringify(
           {
-            systemLambda: "wppes-mach-poc-dev-use1-lmb-sapi",
-            securityGroup: "wppes-mach-poc-dev-use1-sg-sapi-lambda -> TCP 5432",
+            systemLambda: "wppes-mach-poc-dev-mxc1-lmb-sapi",
+            securityGroup: "wppes-mach-poc-dev-mxc1-sg-sapi-lambda -> TCP 5432",
             action: "GET_TRANSACTION_BY_ID",
             transactionId: parsed.data.transactionId,
           },
@@ -684,14 +684,14 @@ INSERT INTO transactions (
         id: "rds",
         layerCode: "6. Base de Datos (SoR)",
         title: "Amazon RDS PostgreSQL 16",
-        awsResourceName: "wppes-mach-poc-dev-use1-rds-pg",
+        awsResourceName: "wppes-mach-poc-dev-mxc1-rds-pg",
         subnetOrZone: "PRIVATE_ISOLATED (TCP 5432)",
         spanId: spanRds.spanId,
         traceparent: spanRds.raw,
         latencyMs: 11,
         summary: "SELECT parametrizado por clave primaria UUID retornado a sAPI.",
         artifactTitle: "6. Consulta SQL Parametrizada en PostgreSQL (wppes_mach_poc)",
-        artifactContent: `-- Instancia: wppes-mach-poc-dev-use1-rds-pg (DB: wppes_mach_poc)
+        artifactContent: `-- Instancia: wppes-mach-poc-dev-mxc1-rds-pg (DB: wppes_mach_poc)
 SELECT
   transaction_id AS "transactionId",
   customer_id    AS "customerId",
@@ -1055,7 +1055,7 @@ LIMIT 1;`,
           <p style={{ color: "#94a3b8", margin: 0, fontSize: "0.92rem" }}>
             Arquitectura empresarial desacoplada con contratos Zod compartidos, trazabilidad W3C{" "}
             <code>traceparent</code> y nomenclatura estándar{" "}
-            <code>wppes-mach-poc-dev-use1-*</code>.
+            <code>wppes-mach-poc-dev-mxc1-*</code> en Querétaro, México.
           </p>
         </div>
 
@@ -1078,7 +1078,7 @@ LIMIT 1;`,
             WPP Enterprise Solutions ↗
           </a>
           <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
-            Región AWS Primaria: <code>us-east-1 (use1)</code>
+            Región AWS Primaria: <code>mx-central-1 (mxc1 - Querétaro, México)</code>
           </span>
         </div>
       </header>
@@ -1285,7 +1285,7 @@ LIMIT 1;`,
                 </label>
 
                 <label style={{ display: "grid", gap: "0.3rem", fontSize: "0.88rem" }}>
-                  Cognito Bearer JWT (wppes-mach-poc-dev-use1-cog-up)
+                  Cognito Bearer JWT (wppes-mach-poc-dev-mxc1-cog-up)
                   <input
                     value={jwtToken}
                     onChange={(e) => setJwtToken(e.target.value)}
@@ -1762,18 +1762,19 @@ LIMIT 1;`,
                 color: "#e2e8f0",
                 fontSize: "0.8rem",
               }}
-            >{`# 1. Configurar el perfil SSO de WPP Enterprise Solutions (Cero Credenciales Estáticas)
+            >{`# 1. Preservar AWS Free Tier: NO crear AWS Organization (usar Account Instance o IAM Role OIDC en mx-central-1)
 aws configure sso --profile wppes-mach-poc-dev
+# Region: mx-central-1 (México centro - Querétaro)
 
 # 2. Iniciar sesión vía navegador y verificar identidad STS
 aws sso login --profile wppes-mach-poc-dev
 aws sts get-caller-identity --profile wppes-mach-poc-dev
 
-# 3. Bootstrap y Despliegue del Stack CDK v2 (wppes-mach-poc-dev-use1-stack)
+# 3. Bootstrap y Despliegue del Stack CDK v2 en Querétaro (wppes-mach-poc-dev-mxc1-stack)
 pnpm build
 cd infra
-npx cdk bootstrap --profile wppes-mach-poc-dev
-npx cdk deploy WppesMachPocDevStack --profile wppes-mach-poc-dev --require-approval never`}</pre>
+AWS_REGION=mx-central-1 npx cdk bootstrap --profile wppes-mach-poc-dev
+AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach-poc-dev --require-approval never`}</pre>
           </div>
         </section>
       )}
@@ -1803,10 +1804,10 @@ npx cdk deploy WppesMachPocDevStack --profile wppes-mach-poc-dev --require-appro
           >
             WPP Enterprise Solutions
           </a>{" "}
-          — PoC MACH Architecture &amp; API-Led Connectivity on AWS.
+          — PoC MACH Architecture &amp; API-Led Connectivity on AWS (Querétaro, México).
         </div>
         <div>
-          Estándar de Recursos: <code>wppes-mach-poc-dev-use1-*</code> | Trazabilidad:{" "}
+          Estándar de Recursos: <code>wppes-mach-poc-dev-mxc1-*</code> | Trazabilidad:{" "}
           <code>W3C Trace Context</code>
         </div>
       </footer>

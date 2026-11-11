@@ -28,8 +28,8 @@ flowchart TB
         SPA["Contenedor: apps/web\nNext.js 14 Static HTML Export\nCSP + Zod + W3C Traceparent"]
     end
 
-    subgraph AWS["AWS Cloud (us-east-1)"]
-        COGNITO["Amazon Cognito User Pool"]
+    subgraph AWS["AWS Cloud — Región México Centro / Querétaro (mx-central-1)"]
+        COGNITO["Amazon Cognito User Pool\n(wppes-mach-poc-dev-mxc1-cog-up)"]
         APIGW["Amazon API Gateway v2\n(HTTP API + CORS + JWT Authorizer)"]
         XAPI["Contenedor: apps/xapi\nLambda Node.js 20\nExperience API"]
         PAPI["Contenedor: apps/papi\nLambda Node.js 20\nProcess API (Orquestación y Riesgo)"]

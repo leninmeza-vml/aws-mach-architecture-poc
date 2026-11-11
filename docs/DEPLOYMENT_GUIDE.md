@@ -4,34 +4,40 @@ Esta guía detalla el proceso paso a paso para autenticar la sesión en AWS sin 
 
 ---
 
-## 1. Estándar de Nomenclatura de Servicios en AWS (`wppes-*`)
+## 1. Estándar de Nomenclatura de Servicios en AWS (`wppes-*` en `mx-central-1` Querétaro)
 
-Patrón corporativo adoptado en `infra/lib/poc-stack.ts`:
+Patrón corporativo adoptado en `infra/lib/poc-stack.ts` para la región **México (Centro) — Querétaro (`mx-central-1` / `mxc1`)**:
 `wppes-{workload}-{env}-{region_short}-{resource_type}-{component}`
 
 | Capa | Servicio AWS | Nombre Estándar del Recurso | Propósito |
 | :--- | :--- | :--- | :--- |
-| **Perfil SSO Local** | AWS IAM Identity Center | `wppes-mach-poc-dev` | Sesión interactiva local sin llaves estáticas |
-| **Stack IaC** | AWS CloudFormation / CDK | `wppes-mach-poc-dev-use1-stack` | Stack principal (`WppesMachPocDevStack`) |
-| **Red** | Amazon VPC | `wppes-mach-poc-dev-use1-vpc` | VPC aislada en 2 AZs (`us-east-1a`, `us-east-1b`) |
-| **Subredes** | VPC Subnets | `wppes-mach-poc-dev-use1-snet-public` / `isolated` | Separación de capa pública y capa de datos aislada |
-| **Identidad** | Amazon Cognito User Pool | `wppes-mach-poc-dev-use1-cog-up` | Emisión de JWT para usuarios |
-| **Cliente OIDC** | Cognito App Client | `wppes-mach-poc-dev-use1-cog-client-web` | Cliente público para el portal Headless |
-| **Autorizador** | API Gateway JWT Authorizer | `wppes-mach-poc-dev-use1-auth-cognito-jwt` | Validación criptográfica del Bearer Token |
-| **API Gateway** | Amazon API Gateway v2 | `wppes-mach-poc-dev-use1-apigw-xapi` | HTTP API pública con CORS estricto hacia GitHub Pages |
-| **Experience API** | AWS Lambda (`xAPI`) | `wppes-mach-poc-dev-use1-lmb-xapi` | Validación Zod y adaptación para el cliente web |
-| **Process API** | AWS Lambda (`pAPI`) | `wppes-mach-poc-dev-use1-lmb-papi` | Orquestación y reglas de riesgo (`LOW`, `MEDIUM`, `HIGH`) |
-| **System API** | AWS Lambda (`sAPI` en VPC) | `wppes-mach-poc-dev-use1-lmb-sapi` | Único componente con acceso TCP `5432` a RDS |
-| **Firewall sAPI** | EC2 Security Group | `wppes-mach-poc-dev-use1-sg-sapi-lambda` | Grupo de seguridad de la Lambda `sAPI` |
-| **Firewall DB** | EC2 Security Group | `wppes-mach-poc-dev-use1-sg-rds-postgres` | Acepta tráfico TCP `5432` solo desde `sg-sapi-lambda` |
-| **Secretos** | AWS Secrets Manager | `wppes/mach-poc/dev/use1/rds-postgres-credentials` | Credenciales autogeneradas para PostgreSQL |
-| **Base de Datos** | Amazon RDS PostgreSQL 16 | `wppes-mach-poc-dev-use1-rds-pg` | Instancia privada cifrada (DB: `wppes_mach_poc`) |
-| **Logs** | Amazon CloudWatch Logs | `/aws/lambda/wppes-mach-poc-dev-use1-lmb-*` | Trazabilidad centralizada con retención de 30 días |
+| **Perfil Local** | AWS CLI Profile (`mx-central-1`) | `wppes-mach-poc-dev` | Sesión en región Querétaro preservando el Plan Gratuito (Free Tier) |
+| **Stack IaC** | AWS CloudFormation / CDK | `wppes-mach-poc-dev-mxc1-stack` | Stack principal (`WppesMachPocDevStack`) |
+| **Red** | Amazon VPC | `wppes-mach-poc-dev-mxc1-vpc` | VPC aislada en 2 AZs (`mx-central-1a`, `mx-central-1b`) |
+| **Subredes** | VPC Subnets | `wppes-mach-poc-dev-mxc1-snet-public` / `isolated` | Separación de capa pública y capa de datos aislada |
+| **Identidad** | Amazon Cognito User Pool | `wppes-mach-poc-dev-mxc1-cog-up` | Emisión de JWT para usuarios |
+| **Cliente OIDC** | Cognito App Client | `wppes-mach-poc-dev-mxc1-cog-client-web` | Cliente público para el portal Headless |
+| **Autorizador** | API Gateway JWT Authorizer | `wppes-mach-poc-dev-mxc1-auth-cognito-jwt` | Validación criptográfica del Bearer Token |
+| **API Gateway** | Amazon API Gateway v2 | `wppes-mach-poc-dev-mxc1-apigw-xapi` | HTTP API pública con CORS estricto hacia GitHub Pages |
+| **Experience API** | AWS Lambda (`xAPI`) | `wppes-mach-poc-dev-mxc1-lmb-xapi` | Validación Zod y adaptación para el cliente web |
+| **Process API** | AWS Lambda (`pAPI`) | `wppes-mach-poc-dev-mxc1-lmb-papi` | Orquestación y reglas de riesgo (`LOW`, `MEDIUM`, `HIGH`) |
+| **System API** | AWS Lambda (`sAPI` en VPC) | `wppes-mach-poc-dev-mxc1-lmb-sapi` | Único componente con acceso TCP `5432` a RDS |
+| **Firewall sAPI** | EC2 Security Group | `wppes-mach-poc-dev-mxc1-sg-sapi-lambda` | Grupo de seguridad de la Lambda `sAPI` |
+| **Firewall DB** | EC2 Security Group | `wppes-mach-poc-dev-mxc1-sg-rds-postgres` | Acepta tráfico TCP `5432` solo desde `sg-sapi-lambda` |
+| **Secretos** | AWS Secrets Manager | `wppes/mach-poc/dev/mxc1/rds-postgres-credentials` | Credenciales autogeneradas para PostgreSQL |
+| **Base de Datos** | Amazon RDS PostgreSQL 16 | `wppes-mach-poc-dev-mxc1-rds-pg` | Instancia privada cifrada (DB: `wppes_mach_poc`) |
+| **Logs** | Amazon CloudWatch Logs | `/aws/lambda/wppes-mach-poc-dev-mxc1-lmb-*` | Trazabilidad centralizada con retención de 30 días |
 | **CI/CD OIDC** | AWS IAM Role | `wppes-mach-poc-dev-global-iam-role-gh-oidc` | Federación OIDC para despliegues desde GitHub Actions |
 
 ---
 
-## 2. Autenticación Interactiva en AWS mediante Navegador (SSO)
+## 2. Cómo Preservar el Plan Gratuito (AWS Free Tier) en `mx-central-1`
+
+> **IMPORTANTE sobre AWS Free Plan (Cuentas nuevas 2025/2026)**:
+> Si eliges **"Habilitar IAM Identity Center con AWS Organizations"**, AWS crea una Organización y **convierte inmediatamente tu cuenta de Plan Gratuito a Pago por Uso, caducando tus créditos gratuitos**.
+> Para **conservar intacto tu Plan Gratuito**, utiliza cualquiera de estas dos opciones que **NO** crean una AWS Organization:
+> 1. **Instancia de Cuenta de IAM Identity Center** (*Account instance* en `mx-central-1`, sin AWS Organizations).
+> 2. **Federación OIDC para GitHub Actions + AWS CloudShell** en `mx-central-1` (`wppes-mach-poc-dev-global-iam-role-gh-oidc`).
 
 **Importante**: Nunca configures `AWS_ACCESS_KEY_ID` ni `AWS_SECRET_ACCESS_KEY`.
 

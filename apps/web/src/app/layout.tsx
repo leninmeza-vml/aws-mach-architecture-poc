@@ -13,7 +13,7 @@ const cspPolicy = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
-  "connect-src 'self' https://*.execute-api.us-east-1.amazonaws.com https://*.amazoncognito.com",
+  "connect-src 'self' https://*.execute-api.mx-central-1.amazonaws.com https://*.execute-api.us-east-1.amazonaws.com https://*.amazoncognito.com",
 ].join("; ");
 
 export default function RootLayout({

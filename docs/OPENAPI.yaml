@@ -6,11 +6,11 @@ info:
     Especificación unificada de contratos para la Experience API (xAPI) expuesta en
     Amazon API Gateway v2 y los contratos internos de Process API (pAPI) y System API (sAPI).
 servers:
-  - url: https://{apiId}.execute-api.us-east-1.amazonaws.com
-    description: Endpoint público de Amazon API Gateway v2 (xAPI)
+  - url: https://{apiId}.execute-api.mx-central-1.amazonaws.com
+    description: Endpoint público de Amazon API Gateway v2 (xAPI) en Región México (Centro - Querétaro)
     variables:
       apiId:
-        default: demo-xapi
+        default: wppes-mach-poc-dev-mxc1-apigw-xapi
 
 components:
   securitySchemes:

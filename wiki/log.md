@@ -35,4 +35,10 @@ Para consultar las últimas 5 operaciones vía terminal: `grep "^## \[" wiki/log
 - Se rediseñó `apps/web/src/app/page.tsx` con identidad de **WPP Enterprise Solutions** (`https://www.wpp.com/en/wpp-enterprise-solutions`), navegación por pestañas con estados persistentes independientes para `POST` y `GET`, y un diagrama interactivo en vivo de las 6 capas hasta PostgreSQL.
 - Se re-indexó el grafo en `codebase-memory` y se desplegó la nueva versión en GitHub Pages.
 
+## [2026-11-11] update | Migración íntegra a Región Querétaro, México (mx-central-1 / mxc1) y Protección del Plan Gratuito AWS
+- Se actualizaron `infra/lib/poc-stack.ts`, `infra/bin/infra.ts`, `infra/lib/poc-stack.test.ts`, `.vscode/mcp.json`, `.github/workflows/deploy-infra-cdk.yml`, `apps/web` y `docs/` para operar 100% en la región `mx-central-1` (Querétaro, México) bajo el prefijo `wppes-mach-poc-dev-mxc1-*`.
+- Se documentó cómo evitar la pérdida del AWS Free Plan (no habilitar AWS Organizations al usar IAM Identity Center; usar *Account Instance* o federación OIDC + CloudShell).
+- Se re-indexó el repositorio en `codebase-memory` y se desplegó la actualización a GitHub Pages.
+
+
 

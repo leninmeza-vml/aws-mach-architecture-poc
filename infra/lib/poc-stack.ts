@@ -31,7 +31,7 @@ export class PocMachStack extends cdk.Stack {
     const orgPrefix = props?.orgPrefix ?? "wppes";
     const workloadName = props?.workloadName ?? "mach-poc";
     const environmentName = props?.environmentName ?? "dev";
-    const regionShort = props?.regionShort ?? "use1";
+    const regionShort = props?.regionShort ?? "mxc1";
     const resourcePrefix = `${orgPrefix}-${workloadName}-${environmentName}-${regionShort}`;
 
     const githubOrgRepo =
@@ -47,13 +47,14 @@ export class PocMachStack extends cdk.Stack {
     );
     cdk.Tags.of(this).add("Workload", workloadName);
     cdk.Tags.of(this).add("Environment", environmentName);
+    cdk.Tags.of(this).add("Region", "mx-central-1");
     cdk.Tags.of(this).add("Architecture", "MACH-API-Led");
     cdk.Tags.of(this).add("ManagedBy", "AWS-CDK-v2");
 
-    // 1. Red (VPC) con subredes públicas y privadas aisladas
+    // 1. Red (VPC) en Querétaro, México (mx-central-1) con subredes públicas y privadas aisladas
     const vpc = new ec2.Vpc(this, "PocMachVpc", {
       vpcName: `${resourcePrefix}-vpc`,
-      availabilityZones: ["us-east-1a", "us-east-1b"],
+      availabilityZones: ["mx-central-1a", "mx-central-1b"],
       natGateways: 0,
       subnetConfiguration: [
         {

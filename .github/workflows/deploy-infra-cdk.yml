@@ -9,10 +9,10 @@ permissions:
 
 jobs:
   deploy-cdk:
-    name: Assume OIDC Role & Deploy CDK Stack
+    name: Assume OIDC Role & Deploy CDK Stack (mx-central-1 Querétaro)
     runs-on: ubuntu-latest
     env:
-      AWS_REGION: us-east-1
+      AWS_REGION: mx-central-1
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
