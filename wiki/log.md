@@ -45,6 +45,12 @@ Para consultar las últimas 5 operaciones vía terminal: `grep "^## \[" wiki/log
 - Se creó el rol IAM `arn:aws:iam::723949187900:role/wppes-mach-poc-dev-global-iam-role-gh-oidc` con política de confianza restringida a `repo:leninmeza-vml/aws-mach-architecture-poc:*`.
 - Se configuró el secreto `AWS_OIDC_ROLE_ARN` en GitHub Actions mediante `gh secret set` y se actualizó `deploy-infra-cdk.yml` para ejecutar `cdk bootstrap` y `cdk deploy` en `mx-central-1`.
 
+## [2026-11-11] update | Despliegue 100% CREATE_COMPLETE en mx-central-1 y Acordeón Interactivo con Diagramas Mermaid en Frontend
+- El stack `wppes-mach-poc-dev-mxc1-stack` finalizó con `47/47` recursos en `CREATE_COMPLETE` en Querétaro (`mx-central-1`), generando el endpoint `https://x9ghhi1zbc.execute-api.mx-central-1.amazonaws.com` y el User Pool `mx-central-1_mRZ0XCzrm`.
+- Se agregó en `apps/web/src/app/page.tsx` el acordeón interactivo de 4 secciones (iniciando cerrado): explicación de la PoC, tabla de servicios, diagrama Mermaid API-Led y diagrama Mermaid E2E desde GitHub Actions hasta RDS PostgreSQL.
+- Se re-indexó el repositorio en `codebase-memory` y se desplegó en GitHub Pages.
+
+
 
 
 

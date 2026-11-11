@@ -31,4 +31,9 @@ sources: [prompt-setup-poc-aws-vscode.md]
    - Grupos de logs en **Amazon CloudWatch** (`/aws/lambda/wppes-mach-poc-dev-mxc1-lmb-*`) con retención configurada (`ONE_MONTH`).
    - Permisos IAM de privilegio mínimo (`grantInvoke` de `xapi` -> `papi` y de `papi` -> `sapi`; `grantRead` del secreto de DB solo a `sapi`).
 5. **Rol OIDC para GitHub Actions (`wppes-mach-poc-dev-global-iam-role-gh-oidc`)**:
-   - Proveedor OIDC y rol IAM con condición estricta `repo:leninmeza-vml/aws-mach-architecture-poc:*`.
+   - Proveedor OIDC y rol IAM con condición estricta `repo:leninmeza-vml*/aws-mach-architecture-poc*:*`.
+
+## Salidas Desplegadas en Producción (`mx-central-1` — `CREATE_COMPLETE`)
+- **CloudFormation Stack**: `wppes-mach-poc-dev-mxc1-stack` (`47/47` recursos `CREATE_COMPLETE`).
+- **Endpoint Real de API Gateway v2 (`HttpApiEndpoint`)**: `https://x9ghhi1zbc.execute-api.mx-central-1.amazonaws.com`
+- **Cognito User Pool ID (`CognitoUserPoolId`)**: `mx-central-1_mRZ0XCzrm`

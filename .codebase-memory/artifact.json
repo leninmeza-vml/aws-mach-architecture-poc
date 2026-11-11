@@ -1,12 +1,11 @@
 {
     "schema_version": 2,
-    "commit": "4b3433e881cca663b9967e58bf13e779ec1dc787",
-    "indexed_at": "2026-11-11T19:31:56Z",
+    "commit": "feafc7248cb252f1b54ee659378dd9b7f4de69ff",
+    "indexed_at": "2026-11-11T19:54:45Z",
     "project": "Users-leninmeza-Documents-WebDevelopment.nosync-MACH-aws-mach-architecture-poc",
-    "nodes": 396,
-    "edges": 511,
-    "original_size": 2490368,
-    "compressed_size": 227990,
-    "compression_level": 9,
-    "reconcile_basis": "git-clean-head"
+    "nodes": 404,
+    "edges": 527,
+    "original_size": 2686976,
+    "compressed_size": 247424,
+    "compression_level": 9
 }

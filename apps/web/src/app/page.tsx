@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   CreateTransactionSchema,
   QueryStatusSchema,
@@ -11,10 +11,82 @@ import {
 
 const XAPI_BASE_URL =
   process.env.NEXT_PUBLIC_XAPI_URL ||
-  "https://wppes-mach-poc-dev-mxc1-apigw-xapi.execute-api.mx-central-1.amazonaws.com";
+  "https://x9ghhi1zbc.execute-api.mx-central-1.amazonaws.com";
 
 type ActiveTab = "post" | "get" | "naming";
+type AccordionSectionId =
+  | "poc-overview"
+  | "aws-services"
+  | "mermaid-api-led"
+  | "mermaid-e2e-cicd";
 type HopStatus = "idle" | "processing" | "success" | "error";
+
+const MERMAID_API_LED_CODE = `flowchart LR
+    subgraph Canal["Canal Headless (GitHub Pages CDN)"]
+        UI["apps/web\\nNext.js 14 Static Export\\nZod + W3C traceparent"]
+    end
+
+    subgraph Edge["Capa de Entrada y Seguridad (mx-central-1)"]
+        APIGW["Amazon API Gateway v2\\nwppes-mach-poc-dev-mxc1-apigw-xapi\\n(x9ghhi1zbc)"]
+        COG["Amazon Cognito User Pool\\nwppes-mach-poc-dev-mxc1-cog-up\\n(mx-central-1_mRZ0XCzrm)"]
+    end
+
+    subgraph APILed["Capas API-Led Connectivity (AWS Lambda Node.js 20)"]
+        XAPI["1. Experience API (xAPI)\\nwppes-mach-poc-dev-mxc1-lmb-xapi\\nAdaptación de canal + JWT + Trace"]
+        PAPI["2. Process API (pAPI)\\nwppes-mach-poc-dev-mxc1-lmb-papi\\nOrquestación + Reglas Antifraude"]
+        SAPI["3. System API (sAPI en VPC)\\nwppes-mach-poc-dev-mxc1-lmb-sapi\\nAcceso exclusivo a persistencia"]
+    end
+
+    subgraph Datos["Subred Privada Aislada (PRIVATE_ISOLATED)"]
+        SECRETS["AWS Secrets Manager\\nwppes/mach-poc/dev/mxc1/..."]
+        RDS[("Amazon RDS PostgreSQL 16\\nwppes-mach-poc-dev-mxc1-rds-pg\\nDB: wppes_mach_poc (TCP 5432)")]
+    end
+
+    UI -- "HTTPS POST / GET\\nBearer JWT + traceparent" --> APIGW
+    APIGW -. "Valida JWT" .-> COG
+    APIGW --> XAPI
+    XAPI -- "Child Span W3C" --> PAPI
+    PAPI -- "Child Span W3C" --> SAPI
+    SAPI -. "Lee credenciales" .-> SECRETS
+    SAPI -- "SG privado TCP 5432" --> RDS`;
+
+const MERMAID_E2E_CICD_CODE = `sequenceDiagram
+    autonumber
+    actor Dev as Desarrollador / Arquitecto
+    participant GH as GitHub Actions (CI/CD & Pages)
+    participant OIDC as AWS IAM OIDC Role (723949187900)
+    participant CFN as AWS CDK / CloudFormation (mx-central-1)
+    participant SPA as Portal Web Headless (GitHub Pages)
+    participant APIGW as API Gateway v2 + Cognito JWT
+    participant XAPI as Lambda xAPI (Experience)
+    participant PAPI as Lambda pAPI (Process)
+    participant SAPI as Lambda sAPI (System - VPC)
+    participant RDS as RDS PostgreSQL 16 (wppes_mach_poc)
+
+    rect rgb(15, 23, 42)
+    Note over Dev,CFN: Fase 1 — Despliegue Automatizado sin Credenciales Estáticas (DevSecOps)
+    Dev->>GH: git push origin main
+    GH->>SPA: Compila Next.js (output: export) y publica en GitHub Pages
+    GH->>OIDC: Solicita token OIDC (sts:AssumeRoleWithWebIdentity)
+    OIDC-->>GH: Emite credenciales temporales STS
+    GH->>CFN: npx cdk deploy WppesMachPocDevStack (mx-central-1 Querétaro)
+    CFN-->>RDS: Aprovisiona VPC, Security Groups, Lambdas, Cognito y RDS
+    end
+
+    rect rgb(17, 34, 51)
+    Note over SPA,RDS: Fase 2 — Ejecución Transaccional en Tiempo Real (W3C Trace Context)
+    Dev->>SPA: Completa formulario (POST o GET)
+    SPA->>SPA: Valida con Zod (@poc-mach/types) y genera traceparent (00-traceId-spanId-01)
+    SPA->>APIGW: HTTPS Request + Authorization: Bearer JWT + traceparent
+    APIGW->>XAPI: Token JWT válido -> Invoca wppes-mach-poc-dev-mxc1-lmb-xapi
+    XAPI->>PAPI: Valida contrato, propaga traceId -> Invoca wppes-mach-poc-dev-mxc1-lmb-papi
+    PAPI->>SAPI: Evalúa riesgo (LOW/MEDIUM/HIGH) -> Invoca wppes-mach-poc-dev-mxc1-lmb-sapi
+    SAPI->>RDS: SQL Parametrizado sobre TCP 5432 (Subred PRIVATE_ISOLATED)
+    RDS-->>SAPI: Retorna fila tipada (TransactionResponse)
+    SAPI-->>PAPI: Resultado persistido/consultado
+    PAPI-->>XAPI: Respuesta orquestada + traceparent
+    XAPI-->>SPA: HTTP 201/200 JSON + traceparent
+    end`;
 
 export interface LayerHopTrace {
   id: string;
@@ -246,7 +318,126 @@ function generateUuidV4(): string {
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
+function MermaidDiagramView({
+  chartId,
+  code,
+}: {
+  chartId: string;
+  code: string;
+}) {
+  const [svgHtml, setSvgHtml] = useState<string>("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function renderDiagram() {
+      try {
+        const w = window as unknown as {
+          mermaid?: {
+            initialize: (cfg: Record<string, unknown>) => void;
+            render: (id: string, text: string) => Promise<{ svg: string }>;
+          };
+        };
+
+        if (!w.mermaid) {
+          await new Promise<void>((resolve, reject) => {
+            const existing = document.getElementById("mermaid-cdn-script");
+            if (existing) {
+              existing.addEventListener("load", () => resolve());
+              if ((window as unknown as { mermaid?: unknown }).mermaid) {
+                resolve();
+              }
+              return;
+            }
+            const script = document.createElement("script");
+            script.id = "mermaid-cdn-script";
+            script.src =
+              "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js";
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error("No se pudo cargar Mermaid"));
+            document.head.appendChild(script);
+          });
+        }
+
+        if (w.mermaid && !cancelled) {
+          w.mermaid.initialize({
+            startOnLoad: false,
+            theme: "dark",
+            securityLevel: "loose",
+          });
+          const uniqueId = `${chartId}-${Math.random().toString(36).slice(2, 8)}`;
+          const rendered = await w.mermaid.render(uniqueId, code);
+          if (!cancelled) {
+            setSvgHtml(rendered.svg);
+          }
+        }
+      } catch {
+        // Si falla la carga desde CDN, se muestra el bloque de código Mermaid limpio
+      }
+    }
+
+    renderDiagram();
+    return () => {
+      cancelled = true;
+    };
+  }, [chartId, code]);
+
+  return (
+    <div style={{ display: "grid", gap: "0.75rem" }}>
+      {svgHtml && (
+        <div
+          style={{
+            backgroundColor: "#0b1120",
+            padding: "1rem",
+            borderRadius: 10,
+            border: "1px solid #334155",
+            overflowX: "auto",
+            textAlign: "center",
+          }}
+          dangerouslySetInnerHTML={{ __html: svgHtml }}
+        />
+      )}
+      <details style={{ fontSize: "0.78rem", color: "#94a3b8" }}>
+        <summary style={{ cursor: "pointer", userSelect: "none" }}>
+          Ver código fuente Mermaid (<code>```mermaid</code>)
+        </summary>
+        <pre
+          style={{
+            marginTop: "0.5rem",
+            backgroundColor: "#0b1120",
+            padding: "0.85rem",
+            borderRadius: 8,
+            overflowX: "auto",
+            color: "#38bdf8",
+            border: "1px solid #1e293b",
+          }}
+        >
+          {code}
+        </pre>
+      </details>
+    </div>
+  );
+}
+
 export default function HomePage() {
+  // Acordeón informativo de 4 secciones (inicia 100% cerrado; el usuario abre cada pestaña)
+  const [openAccordions, setOpenAccordions] = useState<
+    Record<AccordionSectionId, boolean>
+  >({
+    "poc-overview": false,
+    "aws-services": false,
+    "mermaid-api-led": false,
+    "mermaid-e2e-cicd": false,
+  });
+
+  function toggleAccordion(sectionId: AccordionSectionId) {
+    setOpenAccordions((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  }
+
   // Navegación por pestañas (los estados de POST y GET se mantienen intactos al cambiar de pestaña)
   const [activeTab, setActiveTab] = useState<ActiveTab>("post");
 
@@ -1082,6 +1273,411 @@ LIMIT 1;`,
           </span>
         </div>
       </header>
+
+      {/* ===================================================================== */}
+      {/* BREVE DESCRIPCIÓN Y ACORDEÓN DE 4 SECCIONES (INICIA CERRADO)          */}
+      {/* ===================================================================== */}
+      <section
+        aria-label="Documentación Interactiva en Acordeón de la PoC"
+        style={{
+          marginBottom: "1.75rem",
+          backgroundColor: "#1e293b",
+          borderRadius: 12,
+          border: "1px solid #334155",
+          padding: "1.25rem 1.5rem",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "0.75rem",
+            marginBottom: "0.9rem",
+          }}
+        >
+          <div>
+            <h2 style={{ margin: 0, fontSize: "1.1rem", color: "#f8fafc" }}>
+              Resumen Arquitectónico de la PoC — WPP Enterprise Solutions
+            </h2>
+            <p style={{ margin: "0.25rem 0 0", fontSize: "0.85rem", color: "#94a3b8" }}>
+              Explora los 4 paneles desplegables (inician cerrados; haz clic en cada pestaña del
+              acordeón para abrir o cerrar su contenido).
+            </p>
+          </div>
+          <span
+            style={{
+              fontSize: "0.75rem",
+              backgroundColor: "#0f172a",
+              color: "#a7f3d0",
+              padding: "0.3rem 0.7rem",
+              borderRadius: 999,
+              border: "1px solid #065f46",
+              fontFamily: "monospace",
+            }}
+          >
+            Stack Activo: wppes-mach-poc-dev-mxc1-stack (CREATE_COMPLETE)
+          </span>
+        </div>
+
+        <div style={{ display: "grid", gap: "0.65rem" }}>
+          {/* PANEL 1 DEL ACORDEÓN: BREVE EXPLICACIÓN DE LA POC */}
+          <div
+            style={{
+              backgroundColor: "#0f172a",
+              borderRadius: 10,
+              border: openAccordions["poc-overview"]
+                ? "1px solid #38bdf8"
+                : "1px solid #334155",
+              overflow: "hidden",
+            }}
+          >
+            <button
+              type="button"
+              aria-expanded={openAccordions["poc-overview"]}
+              onClick={() => toggleAccordion("poc-overview")}
+              style={{
+                width: "100%",
+                padding: "0.9rem 1.1rem",
+                backgroundColor: "transparent",
+                border: "none",
+                color: "#f8fafc",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
+                textAlign: "left",
+                fontWeight: 700,
+                fontSize: "0.92rem",
+              }}
+            >
+              <span>
+                1. Breve explicación de la PoC (MACH + API-Led Connectivity en AWS)
+              </span>
+              <span style={{ color: "#38bdf8", fontSize: "0.82rem", fontWeight: 600 }}>
+                {openAccordions["poc-overview"] ? "▲ Cerrar" : "▼ Abrir"}
+              </span>
+            </button>
+
+            {openAccordions["poc-overview"] && (
+              <div
+                style={{
+                  padding: "0 1.1rem 1.1rem",
+                  borderTop: "1px solid #1e293b",
+                  fontSize: "0.87rem",
+                  color: "#cbd5e1",
+                  lineHeight: 1.6,
+                }}
+              >
+                <p style={{ marginTop: "0.85rem" }}>
+                  Esta Prueba de Concepto (PoC) para{" "}
+                  <a
+                    href="https://www.wpp.com/en/wpp-enterprise-solutions"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "#38bdf8", fontWeight: 600 }}
+                  >
+                    WPP Enterprise Solutions
+                  </a>{" "}
+                  demuestra cómo desacoplar completamente un canal digital moderno combinando dos
+                  estándares de arquitectura empresarial en la región{" "}
+                  <strong>México (Centro) — Querétaro (<code>mx-central-1</code>)</strong>:
+                </p>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                    gap: "0.75rem",
+                    marginTop: "0.75rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "0.8rem",
+                      borderRadius: 8,
+                      backgroundColor: "#1e293b",
+                      border: "1px solid #334155",
+                    }}
+                  >
+                    <strong style={{ color: "#38bdf8" }}>M — Microservices</strong>
+                    <p style={{ margin: "0.3rem 0 0", fontSize: "0.8rem" }}>
+                      Funciones AWS Lambda independientes por capa (<code>xAPI</code>,{" "}
+                      <code>pAPI</code>, <code>sAPI</code>) con permisos IAM de privilegio mínimo.
+                    </p>
+                  </div>
+                  <div
+                    style={{
+                      padding: "0.8rem",
+                      borderRadius: 8,
+                      backgroundColor: "#1e293b",
+                      border: "1px solid #334155",
+                    }}
+                  >
+                    <strong style={{ color: "#2dd4bf" }}>A — API-First</strong>
+                    <p style={{ margin: "0.3rem 0 0", fontSize: "0.8rem" }}>
+                      Contratos OpenAPI 3.1 y validación en tiempo de ejecución con esquemas{" "}
+                      <strong>Zod</strong> compartidos en <code>@poc-mach/types</code>.
+                    </p>
+                  </div>
+                  <div
+                    style={{
+                      padding: "0.8rem",
+                      borderRadius: 8,
+                      backgroundColor: "#1e293b",
+                      border: "1px solid #334155",
+                    }}
+                  >
+                    <strong style={{ color: "#a7f3d0" }}>C — Cloud-Native</strong>
+                    <p style={{ margin: "0.3rem 0 0", fontSize: "0.8rem" }}>
+                      Infraestructura 100% declarativa en <strong>AWS CDK v2</strong> desplegada en{" "}
+                      <code>mx-central-1</code> mediante federación OIDC sin claves estáticas.
+                    </p>
+                  </div>
+                  <div
+                    style={{
+                      padding: "0.8rem",
+                      borderRadius: 8,
+                      backgroundColor: "#1e293b",
+                      border: "1px solid #334155",
+                    }}
+                  >
+                    <strong style={{ color: "#e9d5ff" }}>H — Headless</strong>
+                    <p style={{ margin: "0.3rem 0 0", fontSize: "0.8rem" }}>
+                      Portal Next.js compilado como exportación estática en{" "}
+                      <strong>GitHub Pages</strong> que propaga trazabilidad{" "}
+                      <strong>W3C Trace Context</strong> (<code>traceparent</code>).
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* PANEL 2 DEL ACORDEÓN: LOS SERVICIOS USADOS */}
+          <div
+            style={{
+              backgroundColor: "#0f172a",
+              borderRadius: 10,
+              border: openAccordions["aws-services"]
+                ? "1px solid #2dd4bf"
+                : "1px solid #334155",
+              overflow: "hidden",
+            }}
+          >
+            <button
+              type="button"
+              aria-expanded={openAccordions["aws-services"]}
+              onClick={() => toggleAccordion("aws-services")}
+              style={{
+                width: "100%",
+                padding: "0.9rem 1.1rem",
+                backgroundColor: "transparent",
+                border: "none",
+                color: "#f8fafc",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
+                textAlign: "left",
+                fontWeight: 700,
+                fontSize: "0.92rem",
+              }}
+            >
+              <span>
+                2. Servicios de AWS y GitHub utilizados en la PoC (Región Querétaro mx-central-1)
+              </span>
+              <span style={{ color: "#2dd4bf", fontSize: "0.82rem", fontWeight: 600 }}>
+                {openAccordions["aws-services"] ? "▲ Cerrar" : "▼ Abrir"}
+              </span>
+            </button>
+
+            {openAccordions["aws-services"] && (
+              <div
+                style={{
+                  padding: "0.85rem 1.1rem 1.1rem",
+                  borderTop: "1px solid #1e293b",
+                  fontSize: "0.84rem",
+                  color: "#cbd5e1",
+                }}
+              >
+                <div style={{ overflowX: "auto" }}>
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      fontSize: "0.8rem",
+                      backgroundColor: "#0b1120",
+                      borderRadius: 8,
+                    }}
+                  >
+                    <thead>
+                      <tr style={{ color: "#2dd4bf", textAlign: "left" }}>
+                        <th style={{ padding: "0.6rem", borderBottom: "1px solid #334155" }}>
+                          Capa
+                        </th>
+                        <th style={{ padding: "0.6rem", borderBottom: "1px solid #334155" }}>
+                          Servicio Cloud
+                        </th>
+                        <th style={{ padding: "0.6rem", borderBottom: "1px solid #334155" }}>
+                          Identificador Estándar (mxc1)
+                        </th>
+                        <th style={{ padding: "0.6rem", borderBottom: "1px solid #334155" }}>
+                          Función en la Arquitectura
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {WPP_AWS_NAMING_CATALOG.map((item) => (
+                        <tr
+                          key={`acc-${item.resourceName}`}
+                          style={{ borderBottom: "1px solid #1e293b" }}
+                        >
+                          <td style={{ padding: "0.55rem 0.6rem", fontWeight: 600 }}>
+                            {item.layer}
+                          </td>
+                          <td style={{ padding: "0.55rem 0.6rem" }}>{item.service}</td>
+                          <td
+                            style={{
+                              padding: "0.55rem 0.6rem",
+                              fontFamily: "monospace",
+                              color: "#a7f3d0",
+                            }}
+                          >
+                            {item.resourceName}
+                          </td>
+                          <td style={{ padding: "0.55rem 0.6rem", color: "#94a3b8" }}>
+                            {item.purpose}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* PANEL 3 DEL ACORDEÓN: DIAGRAMA MERMAID API-LED CONNECTIVITY */}
+          <div
+            style={{
+              backgroundColor: "#0f172a",
+              borderRadius: 10,
+              border: openAccordions["mermaid-api-led"]
+                ? "1px solid #38bdf8"
+                : "1px solid #334155",
+              overflow: "hidden",
+            }}
+          >
+            <button
+              type="button"
+              aria-expanded={openAccordions["mermaid-api-led"]}
+              onClick={() => toggleAccordion("mermaid-api-led")}
+              style={{
+                width: "100%",
+                padding: "0.9rem 1.1rem",
+                backgroundColor: "transparent",
+                border: "none",
+                color: "#f8fafc",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
+                textAlign: "left",
+                fontWeight: 700,
+                fontSize: "0.92rem",
+              }}
+            >
+              <span>
+                3. Diagrama Mermaid — Arquitectura en modo API-Led Connectivity (xAPI → pAPI → sAPI)
+              </span>
+              <span style={{ color: "#38bdf8", fontSize: "0.82rem", fontWeight: 600 }}>
+                {openAccordions["mermaid-api-led"] ? "▲ Cerrar" : "▼ Abrir"}
+              </span>
+            </button>
+
+            {openAccordions["mermaid-api-led"] && (
+              <div
+                style={{
+                  padding: "0.85rem 1.1rem 1.1rem",
+                  borderTop: "1px solid #1e293b",
+                }}
+              >
+                <p style={{ margin: "0 0 0.75rem", fontSize: "0.83rem", color: "#94a3b8" }}>
+                  Desacoplamiento estricto en tres capas: <strong>Experience API</strong> (canal
+                  web), <strong>Process API</strong> (orquestación y reglas antifraude) y{" "}
+                  <strong>System API</strong> (único componente dentro de la VPC privada con acceso
+                  al puerto <code>5432</code> de RDS PostgreSQL).
+                </p>
+                <MermaidDiagramView
+                  chartId="mermaid-api-led-chart"
+                  code={MERMAID_API_LED_CODE}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* PANEL 4 DEL ACORDEÓN: DIAGRAMA MERMAID END-TO-END DESDE GITHUB ACTIONS HASTA AWS RDS */}
+          <div
+            style={{
+              backgroundColor: "#0f172a",
+              borderRadius: 10,
+              border: openAccordions["mermaid-e2e-cicd"]
+                ? "1px solid #a855f7"
+                : "1px solid #334155",
+              overflow: "hidden",
+            }}
+          >
+            <button
+              type="button"
+              aria-expanded={openAccordions["mermaid-e2e-cicd"]}
+              onClick={() => toggleAccordion("mermaid-e2e-cicd")}
+              style={{
+                width: "100%",
+                padding: "0.9rem 1.1rem",
+                backgroundColor: "transparent",
+                border: "none",
+                color: "#f8fafc",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
+                textAlign: "left",
+                fontWeight: 700,
+                fontSize: "0.92rem",
+              }}
+            >
+              <span>
+                4. Diagrama Mermaid — Interacción de extremo a extremo (GitHub Actions OIDC → AWS
+                RDS PostgreSQL)
+              </span>
+              <span style={{ color: "#e9d5ff", fontSize: "0.82rem", fontWeight: 600 }}>
+                {openAccordions["mermaid-e2e-cicd"] ? "▲ Cerrar" : "▼ Abrir"}
+              </span>
+            </button>
+
+            {openAccordions["mermaid-e2e-cicd"] && (
+              <div
+                style={{
+                  padding: "0.85rem 1.1rem 1.1rem",
+                  borderTop: "1px solid #1e293b",
+                }}
+              >
+                <p style={{ margin: "0 0 0.75rem", fontSize: "0.83rem", color: "#94a3b8" }}>
+                  Secuencia completa que muestra tanto el plano de control CI/CD (despliegue en{" "}
+                  <strong>GitHub Pages</strong> y aprovisionamiento <strong>AWS CDK v2</strong> vía{" "}
+                  <strong>OIDC</strong> en <code>mx-central-1</code>) como el plano de datos en
+                  tiempo real hasta <strong>Amazon RDS PostgreSQL</strong>.
+                </p>
+                <MermaidDiagramView
+                  chartId="mermaid-e2e-cicd-chart"
+                  code={MERMAID_E2E_CICD_CODE}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* BARRA DE NAVEGACIÓN POR PESTAÑAS (ESTADOS PERSISTENTES E INDEPENDIENTES) */}
       <nav
