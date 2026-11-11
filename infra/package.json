@@ -1,0 +1,25 @@
+{
+  "name": "@poc-mach/infra",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "type-check": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test dist/lib/poc-stack.test.js",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "synth": "cdk synth"
+  },
+  "dependencies": {
+    "@poc-mach/papi": "workspace:*",
+    "@poc-mach/sapi": "workspace:*",
+    "@poc-mach/xapi": "workspace:*",
+    "aws-cdk-lib": "^2.150.0",
+    "constructs": "^10.3.0"
+  },
+  "devDependencies": {
+    "@poc-mach/tsconfig": "workspace:*",
+    "@types/node": "^20.14.0",
+    "aws-cdk": "^2.150.0",
+    "typescript": "^5.5.4"
+  }
+}

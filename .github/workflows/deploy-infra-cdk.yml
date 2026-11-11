@@ -1,0 +1,42 @@
+name: Deploy AWS Infrastructure (CDK v2 via OIDC)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-cdk:
+    name: Assume OIDC Role & Deploy CDK Stack
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Configure AWS Credentials via OIDC (Zero Static Keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install dependencies & build packages
+        run: |
+          pnpm install --frozen-lockfile=false
+          pnpm build
+
+      - name: Deploy AWS CDK Stack
+        working-directory: ./infra
+        run: npx cdk deploy --require-approval never

@@ -1,0 +1,186 @@
+openapi: 3.1.0
+info:
+  title: PoC MACH AWS — Contratos API-Led Connectivity (xAPI, pAPI, sAPI)
+  version: 1.0.0
+  description: >
+    Especificación unificada de contratos para la Experience API (xAPI) expuesta en
+    Amazon API Gateway v2 y los contratos internos de Process API (pAPI) y System API (sAPI).
+servers:
+  - url: https://{apiId}.execute-api.us-east-1.amazonaws.com
+    description: Endpoint público de Amazon API Gateway v2 (xAPI)
+    variables:
+      apiId:
+        default: demo-xapi
+
+components:
+  securitySchemes:
+    CognitoBearerJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT emitido por Amazon Cognito User Pool
+
+  parameters:
+    TraceparentHeader:
+      name: traceparent
+      in: header
+      required: true
+      description: Estándar W3C Trace Context (00-{traceId}-{spanId}-01)
+      schema:
+        type: string
+        pattern: "^00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$"
+        example: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+
+  schemas:
+    CreateTransactionRequest:
+      type: object
+      required:
+        - customerId
+        - amount
+        - currency
+        - concept
+      properties:
+        customerId:
+          type: string
+          minLength: 3
+          maxLength: 64
+          example: "CUST-9001"
+        amount:
+          type: number
+          minimum: 0.01
+          maximum: 1000000
+          example: 1250.00
+        currency:
+          type: string
+          enum: [USD, EUR, MXN, COP, PEN]
+          default: USD
+        concept:
+          type: string
+          minLength: 3
+          maxLength: 255
+          example: "Suscripción anual Cloud MACH"
+        metadata:
+          type: object
+          additionalProperties: true
+
+    TransactionResponse:
+      type: object
+      required:
+        - transactionId
+        - customerId
+        - amount
+        - currency
+        - concept
+        - status
+        - riskLevel
+        - traceId
+        - createdAt
+        - updatedAt
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+          enum: [USD, EUR, MXN, COP, PEN]
+        concept:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED, FAILED]
+        riskLevel:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        traceId:
+          type: string
+          pattern: "^[0-9a-f]{32}$"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        traceId:
+          type: string
+
+security:
+  - CognitoBearerJwt: []
+
+paths:
+  /v1/transactions:
+    post:
+      operationId: createTransaction
+      summary: "[xAPI -> pAPI -> sAPI] Registra una nueva transacción"
+      tags:
+        - Experience API (xAPI)
+      parameters:
+        - $ref: "#/components/parameters/TraceparentHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTransactionRequest"
+      responses:
+        "201":
+          description: Transacción procesada por pAPI y persistida por sAPI
+          headers:
+            traceparent:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResponse"
+        "400":
+          description: Error de validación de contrato Zod
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Token JWT inválido o ausente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/transactions/{transactionId}:
+    get:
+      operationId: getTransactionStatus
+      summary: "[xAPI -> pAPI -> sAPI] Consulta el estado de una transacción por UUID"
+      tags:
+        - Experience API (xAPI)
+      parameters:
+        - $ref: "#/components/parameters/TraceparentHeader"
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Estado actual de la transacción
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResponse"
+        "404":
+          description: Transacción no encontrada en System API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"

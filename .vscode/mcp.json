@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "awslabs-documentation": {
+      "command": "uvx",
+      "args": ["awslabs.aws-documentation-mcp-server@latest"],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      }
+    },
+    "awslabs-iam": {
+      "command": "uvx",
+      "args": ["awslabs.iam-mcp-server@latest"],
+      "env": {
+        "AWS_PROFILE": "poc-mach-dev",
+        "AWS_REGION": "us-east-1"
+      }
+    },
+    "awslabs-cloudwatch": {
+      "command": "uvx",
+      "args": ["awslabs.log-analyzer-with-mcp@latest"],
+      "env": {
+        "AWS_PROFILE": "poc-mach-dev",
+        "AWS_REGION": "us-east-1",
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      }
+    }
+  }
+}

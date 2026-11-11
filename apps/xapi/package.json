@@ -1,0 +1,21 @@
+{
+  "name": "@poc-mach/xapi",
+  "version": "1.0.0",
+  "main": "./dist/handler.js",
+  "types": "./dist/handler.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "type-check": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test dist/handler.test.js",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@poc-mach/papi": "workspace:*",
+    "@poc-mach/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@poc-mach/tsconfig": "workspace:*",
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.4"
+  }
+}

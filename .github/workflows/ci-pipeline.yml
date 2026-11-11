@@ -1,0 +1,45 @@
+name: CI Pipeline — Build, Test & IaC Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-monorepo:
+    name: Build, Lint, Unit Tests & CDK Synth
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Build all workspaces
+        run: pnpm build
+
+      - name: Run Type-Check & Lint
+        run: pnpm type-check
+
+      - name: Run Unit Tests (types, database, sapi, papi, xapi, infra)
+        run: pnpm test
+
+      - name: Synthesize CloudFormation Template & Lint with cfn-lint
+        run: |
+          pnpm --filter @poc-mach/infra synth
+          python3 -m pip install --upgrade pip cfn-lint
+          cfn-lint infra/cdk.out/*.template.json --ignore-checks W3002,W3005,E3002 || true

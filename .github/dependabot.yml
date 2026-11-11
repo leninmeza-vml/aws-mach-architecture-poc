@@ -1,0 +1,24 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      aws-cdk-packages:
+        patterns:
+          - "aws-cdk*"
+          - "constructs"
+      typescript-and-linters:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "eslint*"
+      nextjs-frontend:
+        patterns:
+          - "next"
+          - "react*"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
