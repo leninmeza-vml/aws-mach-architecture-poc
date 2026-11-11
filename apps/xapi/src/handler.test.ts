@@ -77,6 +77,22 @@ describe("@poc-mach/xapi Experience API handler", () => {
     assert.equal(getRes.statusCode, 200);
     const fetched = JSON.parse(getRes.body) as { customerId: string };
     assert.equal(fetched.customerId, "CUST-XAPI-777");
+
+    const deleteRes = await handler({
+      requestContext: {
+        http: {
+          method: "DELETE",
+          path: "/v1/transactions",
+        },
+      },
+      headers: {
+        authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.demo",
+        traceparent,
+      },
+    });
+    assert.equal(deleteRes.statusCode, 200);
+    const truncated = JSON.parse(deleteRes.body) as { truncated: boolean };
+    assert.equal(truncated.truncated, true);
   });
 
   it("valida contratos Zod en POST (400), GET inválido (400), método no permitido (405), error 500 e invokeRemotePapiLambda", async () => {
@@ -105,7 +121,7 @@ describe("@poc-mach/xapi Experience API handler", () => {
     const methodNotAllowed = await handler({
       requestContext: {
         http: {
-          method: "DELETE" as "POST",
+          method: "PUT" as "POST",
           path: "/v1/transactions",
         },
       },

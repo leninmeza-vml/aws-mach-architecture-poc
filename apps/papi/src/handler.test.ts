@@ -52,6 +52,13 @@ describe("@poc-mach/papi business rules & orchestration", () => {
 
     assert.equal(queryRes.statusCode, 200);
     assert.equal(queryRes.data?.customerId, "CUST-PAPI-99");
+
+    const truncateRes = await handler({
+      operation: "PROCESS_TRUNCATE_TRANSACTIONS",
+      traceparent: queryRes.traceparent,
+    });
+    assert.equal(truncateRes.statusCode, 200);
+    assert.equal(truncateRes.truncateData?.truncated, true);
   });
 
   it("retorna 400 ante una operación no reconocida y soporta invokeRemoteSapiLambda", async () => {

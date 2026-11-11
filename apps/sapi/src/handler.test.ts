@@ -35,6 +35,14 @@ describe("@poc-mach/sapi handler", () => {
 
     assert.equal(getRes.statusCode, 200);
     assert.equal(getRes.data?.customerId, "CUST-SAPI-01");
+
+    const truncateRes = await handler({
+      action: "TRUNCATE_TRANSACTIONS",
+      traceparent:
+        "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    });
+    assert.equal(truncateRes.statusCode, 200);
+    assert.equal(truncateRes.truncateData?.truncated, true);
   });
 
   it("retorna 404 cuando el transactionId no existe en sAPI", async () => {

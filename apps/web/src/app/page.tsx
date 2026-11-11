@@ -3,12 +3,16 @@
 import React, { useState, useEffect } from "react";
 import {
   TransactionResponse,
+  TruncateTransactionsResponse,
   Currency,
 } from "@poc-mach/types";
 import {
   buildInitialHops,
   executeCreateTransactionFormFlow,
   executeQueryTransactionFormFlow,
+  executeTruncateTransactionsFlow,
+  FORM_FIELD_TOOLTIPS,
+  FormFieldHelpId,
   LayerHopTrace,
 } from "../flows/transaction-forms";
 
@@ -521,6 +525,80 @@ function MermaidDiagramView({
   );
 }
 
+function FieldHelpTooltip({ fieldId }: { fieldId: FormFieldHelpId }) {
+  const [open, setOpen] = useState(false);
+  const info = FORM_FIELD_TOOLTIPS[fieldId];
+
+  return (
+    <span
+      style={{
+        position: "relative",
+        display: "inline-flex",
+        alignItems: "center",
+        marginLeft: "0.4rem",
+      }}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        aria-label={`Ayuda sobre ${info.label}`}
+        aria-expanded={open}
+        title={info.helpText}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen((prev) => !prev);
+        }}
+        style={{
+          width: 19,
+          height: 19,
+          borderRadius: "50%",
+          border: "1px solid #38bdf8",
+          backgroundColor: open ? "#0284c7" : "#0f172a",
+          color: open ? "#ffffff" : "#38bdf8",
+          fontSize: "0.73rem",
+          fontWeight: 700,
+          lineHeight: 1,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          padding: 0,
+        }}
+      >
+        ?
+      </button>
+      {open && (
+        <span
+          role="tooltip"
+          style={{
+            position: "absolute",
+            bottom: "calc(100% + 7px)",
+            left: 0,
+            zIndex: 60,
+            width: 270,
+            backgroundColor: "#020617",
+            color: "#e2e8f0",
+            border: "1px solid #38bdf8",
+            borderRadius: 8,
+            padding: "0.55rem 0.7rem",
+            fontSize: "0.76rem",
+            fontWeight: 400,
+            lineHeight: 1.45,
+            boxShadow: "0 10px 25px rgba(0, 0, 0, 0.65)",
+          }}
+        >
+          <strong style={{ color: "#38bdf8", display: "block", marginBottom: "0.18rem" }}>
+            {info.label}
+          </strong>
+          {info.helpText}
+        </span>
+      )}
+    </span>
+  );
+}
+
 export default function HomePage() {
   // Acordeón informativo de 4 secciones (inicia 100% cerrado; el usuario abre cada pestaña)
   const [openAccordions, setOpenAccordions] = useState<
@@ -577,6 +655,41 @@ export default function HomePage() {
     executedAt: null,
   });
   const [queriedHistory, setQueriedHistory] = useState<TransactionResponse[]>([]);
+
+  // --- ESTADO DE LIMPIEZA / TRUNCADO DE BASE DE DATOS ---
+  const [truncateLoading, setTruncateLoading] = useState(false);
+  const [truncateResult, setTruncateResult] =
+    useState<TruncateTransactionsResponse | null>(null);
+
+  async function handleTruncateDatabase() {
+    setTruncateLoading(true);
+    const res = await executeTruncateTransactionsFlow({
+      jwtToken,
+      baseUrl: XAPI_BASE_URL,
+    });
+    setCreatedHistory([]);
+    setQueriedHistory([]);
+    setPostState({
+      loading: false,
+      errorMessage: null,
+      response: null,
+      rootTraceparent: "",
+      hops: buildInitialHops("POST"),
+      selectedHopIndex: 3,
+      executedAt: null,
+    });
+    setGetState({
+      loading: false,
+      errorMessage: null,
+      response: null,
+      rootTraceparent: "",
+      hops: buildInitialHops("GET"),
+      selectedHopIndex: 5,
+      executedAt: null,
+    });
+    setTruncateResult(res.response);
+    setTruncateLoading(false);
+  }
 
   async function handleCreateTransaction(e: React.FormEvent) {
     e.preventDefault();
@@ -1652,7 +1765,10 @@ AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach
                 style={{ display: "grid", gap: "0.85rem" }}
               >
                 <label style={{ display: "grid", gap: "0.3rem", fontSize: "0.88rem" }}>
-                  Customer ID (Validado con Zod)
+                  <span style={{ display: "inline-flex", alignItems: "center" }}>
+                    Customer ID (Validado con Zod)
+                    <FieldHelpTooltip fieldId="customerId" />
+                  </span>
                   <input
                     value={customerId}
                     onChange={(e) => setCustomerId(e.target.value)}
@@ -1674,7 +1790,10 @@ AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach
                   }}
                 >
                   <label style={{ display: "grid", gap: "0.3rem", fontSize: "0.88rem" }}>
-                    Monto (&gt;10k MEDIUM, &gt;50k HIGH/PENDING)
+                    <span style={{ display: "inline-flex", alignItems: "center" }}>
+                      Monto (&gt;10k MEDIUM, &gt;50k HIGH/PENDING)
+                      <FieldHelpTooltip fieldId="amount" />
+                    </span>
                     <input
                       type="number"
                       step="0.01"
@@ -1691,7 +1810,10 @@ AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach
                   </label>
 
                   <label style={{ display: "grid", gap: "0.3rem", fontSize: "0.88rem" }}>
-                    Moneda
+                    <span style={{ display: "inline-flex", alignItems: "center" }}>
+                      Moneda
+                      <FieldHelpTooltip fieldId="currency" />
+                    </span>
                     <select
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value as Currency)}
@@ -1713,7 +1835,10 @@ AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach
                 </div>
 
                 <label style={{ display: "grid", gap: "0.3rem", fontSize: "0.88rem" }}>
-                  Concepto de Negocio
+                  <span style={{ display: "inline-flex", alignItems: "center" }}>
+                    Concepto de Negocio
+                    <FieldHelpTooltip fieldId="concept" />
+                  </span>
                   <input
                     value={concept}
                     onChange={(e) => setConcept(e.target.value)}
@@ -1728,7 +1853,10 @@ AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach
                 </label>
 
                 <label style={{ display: "grid", gap: "0.3rem", fontSize: "0.88rem" }}>
-                  Cognito Bearer JWT (wppes-mach-poc-dev-mxc1-cog-up)
+                  <span style={{ display: "inline-flex", alignItems: "center" }}>
+                    Cognito Bearer JWT (wppes-mach-poc-dev-mxc1-cog-up)
+                    <FieldHelpTooltip fieldId="jwtToken" />
+                  </span>
                   <input
                     value={jwtToken}
                     onChange={(e) => setJwtToken(e.target.value)}
@@ -1935,7 +2063,10 @@ AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach
 
               <form onSubmit={handleQueryStatus} style={{ display: "grid", gap: "0.85rem" }}>
                 <label style={{ display: "grid", gap: "0.3rem", fontSize: "0.88rem" }}>
-                  Transaction UUID (Validado con QueryStatusSchema)
+                  <span style={{ display: "inline-flex", alignItems: "center" }}>
+                    Transaction UUID (Validado con QueryStatusSchema)
+                    <FieldHelpTooltip fieldId="queryId" />
+                  </span>
                   <input
                     placeholder="550e8400-e29b-41d4-a716-446655440000"
                     value={queryId}
@@ -2435,6 +2566,71 @@ AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach
             </p>
           </article>
         </div>
+      </section>
+
+      {/* ===================================================================== */}
+      {/* SECCIÓN INFERIOR: ADMINISTRACIÓN Y TRUNCADO DE BASE DE DATOS          */}
+      {/* ===================================================================== */}
+      <section
+        aria-label="Mantenimiento de Base de Datos de Transacciones"
+        style={{
+          marginTop: "1.75rem",
+          backgroundColor: "#1e293b",
+          padding: "1.25rem 1.5rem",
+          borderRadius: 12,
+          border: "1px solid #7f1d1d",
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "1rem",
+        }}
+      >
+        <div style={{ flex: "1 1 520px" }}>
+          <h3 style={{ margin: 0, fontSize: "1.02rem", color: "#fca5a5" }}>
+            Mantenimiento de Datos de la PoC (RDS PostgreSQL / Memoria)
+          </h3>
+          <p style={{ margin: "0.3rem 0 0", fontSize: "0.83rem", color: "#cbd5e1" }}>
+            Ejecuta <code>DELETE /v1/transactions</code> atravesando{" "}
+            <strong>xAPI → pAPI → sAPI → PostgreSQL</strong> (
+            <code>TRUNCATE TABLE transactions</code>) y reinicia el historial de la sesión.
+          </p>
+          {truncateResult && (
+            <div
+              style={{
+                marginTop: "0.55rem",
+                fontSize: "0.8rem",
+                color: "#a7f3d0",
+                backgroundColor: "#0f172a",
+                padding: "0.45rem 0.75rem",
+                borderRadius: 6,
+                border: "1px solid #065f46",
+              }}
+            >
+              ✓ {truncateResult.message} (Trace ID: <code>{truncateResult.traceId}</code>)
+            </div>
+          )}
+        </div>
+
+        <button
+          type="button"
+          disabled={truncateLoading}
+          onClick={handleTruncateDatabase}
+          style={{
+            padding: "0.75rem 1.2rem",
+            borderRadius: 8,
+            border: "1px solid #f87171",
+            backgroundColor: "#dc2626",
+            color: "#ffffff",
+            fontWeight: 700,
+            fontSize: "0.86rem",
+            cursor: "pointer",
+          }}
+        >
+          {truncateLoading
+            ? "Truncando tabla transactions en RDS..."
+            : "🗑 Limpiar / Truncar Base de Datos de Transacciones"}
+        </button>
       </section>
 
       {/* PIE DE PÁGINA CORPORATIVO CON ENLACES Y EXPLICACIONES */}

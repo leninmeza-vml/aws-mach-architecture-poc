@@ -2,6 +2,7 @@ import {
   CreateTransactionSchema,
   QueryStatusSchema,
   TransactionResponse,
+  TruncateTransactionsResponse,
   createTraceparent,
   Currency,
 } from "@poc-mach/types";
@@ -58,6 +59,62 @@ export interface QueryTransactionFormResult {
   hops: LayerHopTrace[];
   source: "aws-live" | "local-fallback" | "validation-error";
 }
+
+export interface TruncateTransactionsFlowInput {
+  jwtToken: string;
+  baseUrl: string;
+}
+
+export interface TruncateTransactionsFlowResult {
+  ok: boolean;
+  response: TruncateTransactionsResponse;
+  rootTraceparent: string;
+  source: "aws-live" | "local-fallback";
+}
+
+export type FormFieldHelpId =
+  | "customerId"
+  | "amount"
+  | "currency"
+  | "concept"
+  | "jwtToken"
+  | "queryId";
+
+export const FORM_FIELD_TOOLTIPS: Record<
+  FormFieldHelpId,
+  { label: string; helpText: string }
+> = {
+  customerId: {
+    label: "Customer ID",
+    helpText:
+      "Identificador único del cliente empresarial (3 a 64 caracteres), validado por CreateTransactionSchema en Zod.",
+  },
+  amount: {
+    label: "Monto",
+    helpText:
+      "Importe de la transacción (> 0). En pAPI determina el riesgo: <= 10,000 LOW/APPROVED, > 10,000 MEDIUM/APPROVED y > 50,000 HIGH/PENDING.",
+  },
+  currency: {
+    label: "Moneda",
+    helpText:
+      "Divisa ISO-4217 permitida por el contrato OpenAPI y Zod: USD, EUR, MXN, COP o PEN.",
+  },
+  concept: {
+    label: "Concepto de Negocio",
+    helpText:
+      "Descripción comercial o motivo de la operación (3 a 255 caracteres) que se almacena en RDS PostgreSQL.",
+  },
+  jwtToken: {
+    label: "Cognito Bearer JWT",
+    helpText:
+      "Token de autorización enviado en el header 'Authorization: Bearer <token>' hacia API Gateway v2 y validado en xAPI.",
+  },
+  queryId: {
+    label: "Transaction UUID",
+    helpText:
+      "Identificador UUID v4 único generado al crear una transacción. Se valida con QueryStatusSchema antes de consultar sAPI y PostgreSQL.",
+  },
+};
 
 export type FetchLike = (
   url: string,
@@ -638,6 +695,46 @@ LIMIT 1;`,
     response: finalRecord,
     rootTraceparent: rootTrace.raw,
     hops: stepDefinitions.map((h) => ({ ...h, status: "success" })),
+    source,
+  };
+}
+
+export async function executeTruncateTransactionsFlow(
+  input: TruncateTransactionsFlowInput,
+  fetchFn: FetchLike = fetch as unknown as FetchLike
+): Promise<TruncateTransactionsFlowResult> {
+  const rootTrace = createTraceparent();
+  let source: "aws-live" | "local-fallback" = "aws-live";
+  let resultData: TruncateTransactionsResponse;
+
+  try {
+    const response = await fetchFn(`${input.baseUrl}/v1/transactions`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${input.jwtToken}`,
+        traceparent: rootTrace.raw,
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    resultData = (await response.json()) as TruncateTransactionsResponse;
+  } catch {
+    source = "local-fallback";
+    resultData = {
+      truncated: true,
+      deletedCount: 0,
+      message:
+        "Base de datos de transacciones reiniciada en sesión local y memoria",
+      traceId: rootTrace.traceId,
+      executedAt: new Date().toISOString(),
+    };
+  }
+
+  return {
+    ok: true,
+    response: resultData,
+    rootTraceparent: rootTrace.raw,
     source,
   };
 }

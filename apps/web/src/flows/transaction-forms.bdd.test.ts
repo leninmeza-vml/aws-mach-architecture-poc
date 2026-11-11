@@ -4,6 +4,8 @@ import { handler as xapiHandler } from "@poc-mach/xapi";
 import {
   executeCreateTransactionFormFlow,
   executeQueryTransactionFormFlow,
+  executeTruncateTransactionsFlow,
+  FORM_FIELD_TOOLTIPS,
   FetchLike,
   buildInitialHops,
   classifyTransactionRisk,
@@ -16,7 +18,11 @@ import {
 function createLocalApiLedFetchAdapter(): FetchLike {
   return async (url, init) => {
     const parsedUrl = new URL(url);
-    const method = (init?.method ?? "GET") as "GET" | "POST" | "OPTIONS";
+    const method = (init?.method ?? "GET") as
+      | "GET"
+      | "POST"
+      | "DELETE"
+      | "OPTIONS";
     const path = parsedUrl.pathname;
     const matchGet = /^\/v1\/transactions\/([^/]+)$/.exec(path);
 
@@ -257,5 +263,65 @@ describe("Feature BDD 2: Formulario 2 — Consultar Estado (GET /v1/transactions
       getResult.response?.transactionId,
       "550e8400-e29b-41d4-a716-446655440000"
     );
+  });
+});
+
+describe("Feature BDD 3: Tooltips de Ayuda (?) y Limpieza/Truncado de Base de Datos (DELETE /v1/transactions)", () => {
+  it("Scenario 3.1: Dados los campos de ambos formularios, Cuando se inspecciona FORM_FIELD_TOOLTIPS, Entonces cada campo cuenta con su explicación concisa para el icono '?'", () => {
+    assert.ok(FORM_FIELD_TOOLTIPS.customerId.helpText.length > 10);
+    assert.ok(FORM_FIELD_TOOLTIPS.amount.helpText.length > 10);
+    assert.ok(FORM_FIELD_TOOLTIPS.currency.helpText.length > 10);
+    assert.ok(FORM_FIELD_TOOLTIPS.concept.helpText.length > 10);
+    assert.ok(FORM_FIELD_TOOLTIPS.jwtToken.helpText.length > 10);
+    assert.ok(FORM_FIELD_TOOLTIPS.queryId.helpText.length > 10);
+  });
+
+  it("Scenario 3.2: Dadas transacciones almacenadas en la base de datos, Cuando el usuario ejecuta el botón de limpiar/truncar (DELETE /v1/transactions), Entonces sAPI vacía la tabla y retorna confirmación", async () => {
+    const localFetch = createLocalApiLedFetchAdapter();
+
+    // Crear al menos una transacción previa
+    await executeCreateTransactionFormFlow(
+      {
+        customerId: "CUST-TO-TRUNCATE",
+        amountInput: "500",
+        currency: "USD",
+        concept: "Registro temporal antes de truncar",
+        jwtToken: "eyJhbGciOiJSUzI1NiIsImtpZCI6Im14YzEtY29nbml0by1rZXkifQ.demo",
+        baseUrl: "https://x9ghhi1zbc.execute-api.mx-central-1.amazonaws.com",
+      },
+      localFetch
+    );
+
+    const truncateRes = await executeTruncateTransactionsFlow(
+      {
+        jwtToken: "eyJhbGciOiJSUzI1NiIsImtpZCI6Im14YzEtY29nbml0by1rZXkifQ.demo",
+        baseUrl: "https://x9ghhi1zbc.execute-api.mx-central-1.amazonaws.com",
+      },
+      localFetch
+    );
+
+    assert.equal(truncateRes.ok, true);
+    assert.equal(truncateRes.source, "aws-live");
+    assert.equal(truncateRes.response.truncated, true);
+    assert.ok(truncateRes.response.deletedCount >= 1);
+
+    // Fallback cuando la red no responde
+    const failingFetch: FetchLike = async () => ({
+      ok: false,
+      status: 500,
+      async json() {
+        return {};
+      },
+    });
+    const fallbackTruncate = await executeTruncateTransactionsFlow(
+      {
+        jwtToken: "eyJhbGciOiJSUzI1NiIsImtpZCI6Im14YzEtY29nbml0by1rZXkifQ.demo",
+        baseUrl: "https://x9ghhi1zbc.execute-api.mx-central-1.amazonaws.com",
+      },
+      failingFetch
+    );
+    assert.equal(fallbackTruncate.ok, true);
+    assert.equal(fallbackTruncate.source, "local-fallback");
+    assert.equal(fallbackTruncate.response.truncated, true);
   });
 });

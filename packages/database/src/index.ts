@@ -2,6 +2,8 @@ import { Pool, PoolConfig } from "pg";
 import {
   TransactionResponse,
   TransactionResponseSchema,
+  TruncateTransactionsResponse,
+  TruncateTransactionsResponseSchema,
   Currency,
   TransactionStatus,
   RiskLevel,
@@ -197,5 +199,42 @@ export class TransactionRepository {
       return null;
     }
     return TransactionResponseSchema.parse(result.rows[0]);
+  }
+
+  async truncateTransactions(
+    traceId: string
+  ): Promise<TruncateTransactionsResponse> {
+    const executedAt = new Date().toISOString();
+
+    if (this.useInMemoryFallback && !this.customExecutor) {
+      const deletedCount = inMemoryStore.size;
+      inMemoryStore.clear();
+      return TruncateTransactionsResponseSchema.parse({
+        truncated: true,
+        deletedCount,
+        message: `Tabla de transacciones limpiada (${deletedCount} registros eliminados en memoria)`,
+        traceId,
+        executedAt,
+      });
+    }
+
+    const executor = this.getExecutor();
+    await this.ensureSchema(executor);
+
+    const countResult = await executor.query(
+      "SELECT COUNT(*)::int AS count FROM transactions"
+    );
+    const firstRow = (countResult.rows[0] ?? {}) as { count?: number };
+    const deletedCount = Number(firstRow.count ?? 0);
+
+    await executor.query("TRUNCATE TABLE transactions");
+
+    return TruncateTransactionsResponseSchema.parse({
+      truncated: true,
+      deletedCount,
+      message: `Tabla transactions truncada exitosamente en RDS PostgreSQL (${deletedCount} registros eliminados)`,
+      traceId,
+      executedAt,
+    });
   }
 }

@@ -73,6 +73,10 @@ Para consultar las últimas 5 operaciones vía terminal: `grep "^## \[" wiki/log
 - Se crearon `apps/web/src/flows/transaction-forms.ts` y la suite BDD `apps/web/src/flows/transaction-forms.bdd.test.ts` (7 escenarios `Given / When / Then` para ambos formularios `POST` y `GET` conectados al pipeline local `xAPI -> pAPI -> sAPI -> Database` con `100%` de cobertura de líneas).
 - Se habilitaron logs JSON estructurados con `traceparent` en `xAPI`, `pAPI` y `sAPI`, invocación remota Lambda-a-Lambda mediante `@aws-sdk/client-lambda`, empaquetado con `esbuild` (`dist-lambda/handler.js`) y creación automática de la tabla `transactions` en Amazon RDS PostgreSQL 16 (`wppes-mach-poc-dev-mxc1-rds-pg`).
 
+## [2026-11-11] update | Tooltips Interactivos (?) en Formularios y Botón de Truncado de Base de Datos (DELETE /v1/transactions)
+- Se agregó el componente `FieldHelpTooltip` (`?`) en todos los campos de los Formularios 1 y 2 (`customerId`, `amount`, `currency`, `concept`, `jwtToken`, `queryId`) con soporte para hover y clic.
+- Se implementó el flujo completo `DELETE /v1/transactions` en `docs/OPENAPI.yaml`, `@poc-mach/types` (`TruncateTransactionsResponseSchema`), `@poc-mach/database` (`truncateTransactions`), `sAPI` (`TRUNCATE_TRANSACTIONS`), `pAPI` (`PROCESS_TRUNCATE_TRANSACTIONS`), `xAPI`, `infra/lib/poc-stack.ts` y el botón inferior en `apps/web/src/app/page.tsx`, manteniendo cobertura unitaria y BDD `>= 90%`.
+
 
 
 

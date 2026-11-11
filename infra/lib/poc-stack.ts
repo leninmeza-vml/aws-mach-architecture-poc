@@ -257,6 +257,7 @@ export class PocMachStack extends cdk.Stack {
         allowMethods: [
           apigwv2.CorsHttpMethod.GET,
           apigwv2.CorsHttpMethod.POST,
+          apigwv2.CorsHttpMethod.DELETE,
           apigwv2.CorsHttpMethod.OPTIONS,
         ],
         allowHeaders: ["Content-Type", "Authorization", "traceparent"],
@@ -272,7 +273,7 @@ export class PocMachStack extends cdk.Stack {
 
     httpApi.addRoutes({
       path: "/v1/transactions",
-      methods: [apigwv2.HttpMethod.POST],
+      methods: [apigwv2.HttpMethod.POST, apigwv2.HttpMethod.DELETE],
       integration: xapiIntegration,
     });
 

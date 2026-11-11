@@ -5,6 +5,7 @@ import {
 import {
   QueryStatusSchema,
   TransactionResponse,
+  TruncateTransactionsResponse,
   parseTraceparent,
 } from "@poc-mach/types";
 
@@ -18,12 +19,17 @@ export type SapiCommand =
       action: "GET_TRANSACTION_BY_ID";
       traceparent?: string;
       payload: { transactionId: string };
+    }
+  | {
+      action: "TRUNCATE_TRANSACTIONS";
+      traceparent?: string;
     };
 
 export interface SapiResult {
   statusCode: number;
   traceId: string;
   data?: TransactionResponse;
+  truncateData?: TruncateTransactionsResponse;
   error?: string;
 }
 
@@ -116,6 +122,22 @@ export async function handler(
         statusCode: 200,
         traceId: trace.traceId,
         data: record,
+      };
+    }
+
+    if (event.action === "TRUNCATE_TRANSACTIONS") {
+      const truncateResult = await repo.truncateTransactions(trace.traceId);
+      logSapiEvent("INFO", "Tabla transactions limpiada/truncada por sAPI", {
+        action: event.action,
+        deletedCount: truncateResult.deletedCount,
+        traceId: trace.traceId,
+        traceparent: trace.raw,
+        statusCode: 200,
+      });
+      return {
+        statusCode: 200,
+        traceId: trace.traceId,
+        truncateData: truncateResult,
       };
     }
 

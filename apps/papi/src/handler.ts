@@ -5,6 +5,7 @@ import {
   QueryStatusSchema,
   RiskLevel,
   TransactionResponse,
+  TruncateTransactionsResponse,
   TransactionStatus,
   createTraceparent,
   parseTraceparent,
@@ -25,12 +26,17 @@ export type PapiRequest =
       operation: "PROCESS_QUERY_STATUS";
       traceparent?: string;
       payload: { transactionId: string };
+    }
+  | {
+      operation: "PROCESS_TRUNCATE_TRANSACTIONS";
+      traceparent?: string;
     };
 
 export interface PapiResponse {
   statusCode: number;
   traceparent: string;
   data?: TransactionResponse;
+  truncateData?: TruncateTransactionsResponse;
   error?: string;
 }
 
@@ -184,6 +190,28 @@ export async function handler(
       statusCode: sapiResult.statusCode,
       traceparent: childTrace.raw,
       data: sapiResult.data,
+      error: sapiResult.error,
+    };
+  }
+
+  if (event.operation === "PROCESS_TRUNCATE_TRANSACTIONS") {
+    const sapiResult = await sapiInvoker({
+      action: "TRUNCATE_TRANSACTIONS",
+      traceparent: childTrace.raw,
+    });
+
+    logPapiEvent("INFO", "Truncado de transacciones completado en pAPI", {
+      operation: event.operation,
+      deletedCount: sapiResult.truncateData?.deletedCount,
+      statusCode: sapiResult.statusCode,
+      traceId: incomingTrace.traceId,
+      traceparent: childTrace.raw,
+    });
+
+    return {
+      statusCode: sapiResult.statusCode,
+      traceparent: childTrace.raw,
+      truncateData: sapiResult.truncateData,
       error: sapiResult.error,
     };
   }

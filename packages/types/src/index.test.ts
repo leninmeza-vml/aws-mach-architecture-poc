@@ -3,12 +3,13 @@ import assert from "node:assert/strict";
 import {
   CreateTransactionSchema,
   QueryStatusSchema,
+  TruncateTransactionsResponseSchema,
   createTraceparent,
   parseTraceparent,
 } from "./index";
 
 describe("@poc-mach/types contracts", () => {
-  it("valida correctamente un payload de CreateTransactionSchema", () => {
+  it("valida correctamente un payload de CreateTransactionSchema y TruncateTransactionsResponseSchema", () => {
     const parsed = CreateTransactionSchema.parse({
       customerId: "CUST-9001",
       amount: 450.75,
@@ -17,6 +18,16 @@ describe("@poc-mach/types contracts", () => {
     });
     assert.equal(parsed.customerId, "CUST-9001");
     assert.equal(parsed.currency, "USD");
+
+    const truncated = TruncateTransactionsResponseSchema.parse({
+      truncated: true,
+      deletedCount: 5,
+      message: "Tabla transactions truncada exitosamente",
+      traceId: "4bf92f3577b34da6a3ce929d0e0e4736",
+      executedAt: new Date().toISOString(),
+    });
+    assert.equal(truncated.truncated, true);
+    assert.equal(truncated.deletedCount, 5);
   });
 
   it("genera y parsea un header W3C traceparent válido y propaga traceId existente", () => {

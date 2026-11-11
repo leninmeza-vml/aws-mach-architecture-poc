@@ -13,7 +13,7 @@ import {
 export interface ApiGatewayV2HttpEvent {
   requestContext: {
     http: {
-      method: "GET" | "POST" | "OPTIONS";
+      method: "GET" | "POST" | "DELETE" | "OPTIONS";
       path: string;
     };
   };
@@ -110,7 +110,7 @@ export async function handler(
   const defaultHeaders: Record<string, string> = {
     "content-type": "application/json",
     "access-control-allow-origin": "*",
-    "access-control-allow-methods": "GET,POST,OPTIONS",
+    "access-control-allow-methods": "GET,POST,DELETE,OPTIONS",
     "access-control-allow-headers": "Content-Type,Authorization,traceparent",
     "access-control-expose-headers": "traceparent",
     traceparent: outboundTrace.raw,
@@ -236,6 +236,31 @@ export async function handler(
         headers: defaultHeaders,
         body: JSON.stringify(
           papiResult.data ?? { error: papiResult.error, traceId: incomingTrace.traceId }
+        ),
+      };
+    }
+
+    if (event.requestContext.http.method === "DELETE") {
+      const papiResult = await papiInvoker({
+        operation: "PROCESS_TRUNCATE_TRANSACTIONS",
+        traceparent: outboundTrace.raw,
+      });
+
+      logXapiEvent("INFO", "Respuesta DELETE (truncate) completada en xAPI", {
+        statusCode: papiResult.statusCode,
+        deletedCount: papiResult.truncateData?.deletedCount,
+        traceId: incomingTrace.traceId,
+        traceparent: outboundTrace.raw,
+      });
+
+      return {
+        statusCode: papiResult.statusCode,
+        headers: defaultHeaders,
+        body: JSON.stringify(
+          papiResult.truncateData ?? {
+            error: papiResult.error,
+            traceId: incomingTrace.traceId,
+          }
         ),
       };
     }

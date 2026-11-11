@@ -60,9 +60,16 @@ describe("@poc-mach/database TransactionRepository", () => {
 
     const missing = await repo.findById(randomUUID());
     assert.equal(missing, null);
+
+    const truncatedMem = await repo.truncateTransactions(
+      "4bf92f3577b34da6a3ce929d0e0e4736"
+    );
+    assert.equal(truncatedMem.truncated, true);
+    assert.ok(truncatedMem.deletedCount >= 1);
+    assert.equal(await repo.findById(id), null);
   });
 
-  it("ejecuta CREATE TABLE IF NOT EXISTS, INSERT y SELECT parametrizados sobre PostgreSQL QueryExecutor", async () => {
+  it("ejecuta CREATE TABLE IF NOT EXISTS, INSERT, SELECT y TRUNCATE sobre PostgreSQL QueryExecutor", async () => {
     const executedQueries: string[] = [];
     const storedRows = new Map<string, Record<string, unknown>>();
 
@@ -70,6 +77,13 @@ describe("@poc-mach/database TransactionRepository", () => {
       async query(text: string, values?: unknown[]) {
         executedQueries.push(text.trim());
         if (text.includes("CREATE TABLE IF NOT EXISTS")) {
+          return { rows: [], rowCount: 0 };
+        }
+        if (text.includes("SELECT COUNT(*)::int AS count")) {
+          return { rows: [{ count: storedRows.size }], rowCount: 1 };
+        }
+        if (text.includes("TRUNCATE TABLE transactions")) {
+          storedRows.clear();
           return { rows: [], rowCount: 0 };
         }
         if (text.includes("INSERT INTO transactions") && values) {
@@ -122,5 +136,14 @@ describe("@poc-mach/database TransactionRepository", () => {
 
     const notFound = await repo.findById(randomUUID());
     assert.equal(notFound, null);
+
+    const truncatedSql = await repo.truncateTransactions(
+      "4bf92f3577b34da6a3ce929d0e0e4736"
+    );
+    assert.equal(truncatedSql.truncated, true);
+    assert.equal(truncatedSql.deletedCount, 1);
+    assert.ok(
+      executedQueries.some((q) => q.includes("TRUNCATE TABLE transactions"))
+    );
   });
 });

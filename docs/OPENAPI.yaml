@@ -105,6 +105,28 @@ components:
           type: string
           format: date-time
 
+    TruncateTransactionsResponse:
+      type: object
+      required:
+        - truncated
+        - deletedCount
+        - message
+        - traceId
+        - executedAt
+      properties:
+        truncated:
+          type: boolean
+        deletedCount:
+          type: integer
+        message:
+          type: string
+        traceId:
+          type: string
+          pattern: "^[0-9a-f]{32}$"
+        executedAt:
+          type: string
+          format: date-time
+
     ErrorResponse:
       type: object
       required:
@@ -150,6 +172,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Token JWT inválido o ausente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      operationId: truncateTransactions
+      summary: "[xAPI -> pAPI -> sAPI] Limpia/trunca la tabla de transacciones en PostgreSQL"
+      tags:
+        - Experience API (xAPI)
+      parameters:
+        - $ref: "#/components/parameters/TraceparentHeader"
+      responses:
+        "200":
+          description: Tabla transactions limpiada exitosamente
+          headers:
+            traceparent:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TruncateTransactionsResponse"
         "401":
           description: Token JWT inválido o ausente
           content:

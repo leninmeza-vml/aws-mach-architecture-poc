@@ -51,6 +51,17 @@ export const QueryStatusSchema = z.object({
 });
 export type QueryStatusInput = z.infer<typeof QueryStatusSchema>;
 
+export const TruncateTransactionsResponseSchema = z.object({
+  truncated: z.boolean(),
+  deletedCount: z.number().int().nonnegative(),
+  message: z.string(),
+  traceId: z.string(),
+  executedAt: z.string().datetime(),
+});
+export type TruncateTransactionsResponse = z.infer<
+  typeof TruncateTransactionsResponseSchema
+>;
+
 export const W3C_TRACEPARENT_REGEX =
   /^00-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})$/;
 
