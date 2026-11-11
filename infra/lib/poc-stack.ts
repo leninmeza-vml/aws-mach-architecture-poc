@@ -113,7 +113,7 @@ export class PocMachStack extends cdk.Stack {
     const database = new rds.DatabaseInstance(this, "PocMachPostgresDb", {
       instanceIdentifier: `${resourcePrefix}-rds-pg`,
       engine: rds.DatabaseInstanceEngine.postgres({
-        version: rds.PostgresEngineVersion.VER_16_3,
+        version: rds.PostgresEngineVersion.VER_16,
       }),
       instanceType: ec2.InstanceType.of(
         ec2.InstanceClass.T4G,
