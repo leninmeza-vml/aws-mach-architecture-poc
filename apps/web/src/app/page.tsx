@@ -13,7 +13,7 @@ const XAPI_BASE_URL =
   process.env.NEXT_PUBLIC_XAPI_URL ||
   "https://x9ghhi1zbc.execute-api.mx-central-1.amazonaws.com";
 
-type ActiveTab = "post" | "get" | "naming";
+type ActiveTab = "post" | "get";
 type AccordionSectionId =
   | "poc-overview"
   | "aws-services"
@@ -1195,7 +1195,7 @@ LIMIT 1;`,
 
   return (
     <main style={{ maxWidth: 1140, margin: "0 auto", padding: "2rem 1.5rem 3.5rem" }}>
-      {/* CABECERA CORPORATIVA WPP ENTERPRISE SOLUTIONS */}
+      {/* CABECERA CORPORATIVA WPP ENTERPRISE SOLUTIONS & VML */}
       <header
         style={{
           marginBottom: "1.75rem",
@@ -1207,11 +1207,11 @@ LIMIT 1;`,
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "space-between",
-          alignItems: "center",
-          gap: "1rem",
+          alignItems: "flex-start",
+          gap: "1.25rem",
         }}
       >
-        <div>
+        <div style={{ flex: "1 1 620px" }}>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
             <span
               style={{
@@ -1224,7 +1224,7 @@ LIMIT 1;`,
                 letterSpacing: "0.03em",
               }}
             >
-              WPP ENTERPRISE SOLUTIONS
+              WPP ENTERPRISE SOLUTIONS &amp; VML
             </span>
             <span
               style={{
@@ -1240,35 +1240,108 @@ LIMIT 1;`,
               MACH + API-Led Connectivity (xAPI → pAPI → sAPI → RDS)
             </span>
           </div>
-          <h1 style={{ fontSize: "1.85rem", marginTop: "0.75rem", marginBottom: "0.4rem" }}>
-            AWS Cloud-Native & Headless Reference Architecture
+          <h1 style={{ fontSize: "1.85rem", marginTop: "0.75rem", marginBottom: "0.5rem" }}>
+            AWS Cloud-Native &amp; Headless Reference Architecture
           </h1>
-          <p style={{ color: "#94a3b8", margin: 0, fontSize: "0.92rem" }}>
-            Arquitectura empresarial desacoplada con contratos Zod compartidos, trazabilidad W3C{" "}
-            <code>traceparent</code> y nomenclatura estándar{" "}
-            <code>wppes-mach-poc-dev-mxc1-*</code> en Querétaro, México.
-          </p>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "flex-end" }}>
-          <a
-            href="https://www.wpp.com/en/wpp-enterprise-solutions"
-            target="_blank"
-            rel="noopener noreferrer"
+          <p
             style={{
-              display: "inline-block",
-              padding: "0.6rem 1rem",
-              borderRadius: 8,
-              backgroundColor: "#f8fafc",
-              color: "#0f172a",
-              fontWeight: 700,
-              fontSize: "0.85rem",
-              textDecoration: "none",
+              color: "#cbd5e1",
+              margin: "0 0 0.5rem",
+              fontSize: "0.93rem",
+              lineHeight: 1.55,
             }}
           >
-            WPP Enterprise Solutions ↗
-          </a>
-          <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+            <strong>Objetivo de la PoC:</strong> Demostrar en vivo las capacidades de ingeniería y
+            transformación tecnológica de{" "}
+            <a
+              href="https://www.wpp.com/en/wpp-enterprise-solutions"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "#38bdf8", fontWeight: 600 }}
+            >
+              WPP Enterprise Solutions
+            </a>{" "}
+            y{" "}
+            <a
+              href="https://www.vml.com/expertise/enterprise-solutions"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "#38bdf8", fontWeight: 600 }}
+            >
+              VML
+            </a>{" "}
+            para diseñar, construir y operar plataformas digitales empresariales ágiles, seguras y
+            escalables mediante la arquitectura <strong>MACH</strong> y{" "}
+            <strong>API-Led Connectivity</strong> sobre{" "}
+            <strong>Amazon Web Services (AWS)</strong> en la región de{" "}
+            <strong>Querétaro, México (<code>mx-central-1</code>)</strong>.
+          </p>
+          <div style={{ fontSize: "0.82rem", color: "#94a3b8" }}>
+            ¿Dudas con algún término técnico como{" "}
+            <a href="#glosario-zod" style={{ color: "#38bdf8" }}>
+              Zod
+            </a>
+            ,{" "}
+            <a href="#glosario-traceparent" style={{ color: "#38bdf8" }}>
+              W3C traceparent
+            </a>{" "}
+            o la{" "}
+            <a href="#glosario-nomenclatura" style={{ color: "#38bdf8" }}>
+              nomenclatura estándar wppes-*
+            </a>
+            ? Consulta el{" "}
+            <a href="#glosario-tecnico" style={{ color: "#a7f3d0", fontWeight: 600 }}>
+              Glosario Técnico al final de la página ↓
+            </a>
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+            alignItems: "flex-end",
+          }}
+        >
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            <a
+              href="https://www.wpp.com/en/wpp-enterprise-solutions"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-block",
+                padding: "0.55rem 0.9rem",
+                borderRadius: 8,
+                backgroundColor: "#f8fafc",
+                color: "#0f172a",
+                fontWeight: 700,
+                fontSize: "0.82rem",
+                textDecoration: "none",
+              }}
+            >
+              WPP Enterprise Solutions ↗
+            </a>
+            <a
+              href="https://www.vml.com/expertise/enterprise-solutions"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-block",
+                padding: "0.55rem 0.9rem",
+                borderRadius: 8,
+                backgroundColor: "#1e293b",
+                color: "#38bdf8",
+                border: "1px solid #38bdf8",
+                fontWeight: 700,
+                fontSize: "0.82rem",
+                textDecoration: "none",
+              }}
+            >
+              VML Enterprise Solutions ↗
+            </a>
+          </div>
+          <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
             Región AWS Primaria: <code>mx-central-1 (mxc1 - Querétaro, México)</code>
           </span>
         </div>
@@ -1299,11 +1372,11 @@ LIMIT 1;`,
         >
           <div>
             <h2 style={{ margin: 0, fontSize: "1.1rem", color: "#f8fafc" }}>
-              Resumen Arquitectónico de la PoC — WPP Enterprise Solutions
+              Documentación Ejecutiva y Arquitectónica de la PoC
             </h2>
             <p style={{ margin: "0.25rem 0 0", fontSize: "0.85rem", color: "#94a3b8" }}>
-              Explora los 4 paneles desplegables (inician cerrados; haz clic en cada pestaña del
-              acordeón para abrir o cerrar su contenido).
+              Los 4 paneles inician cerrados. Haz clic en cada fila para desplegar el contexto de
+              negocio, el catálogo de servicios AWS o los diagramas de arquitectura.
             </p>
           </div>
           <span
@@ -1322,7 +1395,7 @@ LIMIT 1;`,
         </div>
 
         <div style={{ display: "grid", gap: "0.65rem" }}>
-          {/* PANEL 1 DEL ACORDEÓN: BREVE EXPLICACIÓN DE LA POC */}
+          {/* PANEL 1 DEL ACORDEÓN: CAPACIDADES DE WPP ES & VML + EXPLICACIÓN DE LA POC */}
           <div
             style={{
               backgroundColor: "#0f172a",
@@ -1353,9 +1426,19 @@ LIMIT 1;`,
               }}
             >
               <span>
-                1. Breve explicación de la PoC (MACH + API-Led Connectivity en AWS)
+                1. Capacidades de WPP Enterprise Solutions &amp; VML y Explicación de la PoC MACH
               </span>
-              <span style={{ color: "#38bdf8", fontSize: "0.82rem", fontWeight: 600 }}>
+              <span
+                style={{
+                  color: "#38bdf8",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  backgroundColor: "#1e293b",
+                  padding: "0.2rem 0.65rem",
+                  borderRadius: 6,
+                  border: "1px solid #334155",
+                }}
+              >
                 {openAccordions["poc-overview"] ? "▲ Cerrar" : "▼ Abrir"}
               </span>
             </button>
@@ -1371,17 +1454,21 @@ LIMIT 1;`,
                 }}
               >
                 <p style={{ marginTop: "0.85rem" }}>
-                  Esta Prueba de Concepto (PoC) para{" "}
-                  <a
-                    href="https://www.wpp.com/en/wpp-enterprise-solutions"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: "#38bdf8", fontWeight: 600 }}
-                  >
-                    WPP Enterprise Solutions
-                  </a>{" "}
-                  demuestra cómo desacoplar completamente un canal digital moderno combinando dos
-                  estándares de arquitectura empresarial en la región{" "}
+                  <strong>WPP Enterprise Solutions</strong> es la unidad operativa de
+                  transformación empresarial de <strong>WPP</strong> que diseña, construye y opera
+                  los sistemas de crecimiento en los que confían las empresas más competitivas del
+                  mundo. A través de <strong>VML</strong>, integra a más de{" "}
+                  <strong>12,000 especialistas en ingeniería, plataformas cloud, comercio
+                  unificado, consultoría, CRM, CX e Inteligencia Artificial en más de 40
+                  mercados</strong>, conectando la estrategia directamente con la ejecución
+                  tecnológica junto a socios globales líderes como <strong>AWS</strong>.
+                </p>
+                <p style={{ marginTop: "0.5rem" }}>
+                  El propósito de esta <strong>Prueba de Concepto (PoC)</strong> es demostrar de
+                  forma tangible cómo <strong>WPP Enterprise Solutions y VML</strong> modernizan
+                  ecosistemas legados mediante arquitecturas componibles <strong>MACH</strong> y{" "}
+                  <strong>API-Led Connectivity</strong> sobre{" "}
+                  <strong>Amazon Web Services (AWS)</strong> en la región{" "}
                   <strong>México (Centro) — Querétaro (<code>mx-central-1</code>)</strong>:
                 </p>
                 <div
@@ -1402,8 +1489,9 @@ LIMIT 1;`,
                   >
                     <strong style={{ color: "#38bdf8" }}>M — Microservices</strong>
                     <p style={{ margin: "0.3rem 0 0", fontSize: "0.8rem" }}>
-                      Funciones AWS Lambda independientes por capa (<code>xAPI</code>,{" "}
-                      <code>pAPI</code>, <code>sAPI</code>) con permisos IAM de privilegio mínimo.
+                      Servicios de negocio desacoplados en funciones AWS Lambda independientes por
+                      capa (<code>xAPI</code>, <code>pAPI</code>, <code>sAPI</code>) que escalan y
+                      evolucionan sin afectar al resto del ecosistema.
                     </p>
                   </div>
                   <div
@@ -1416,8 +1504,12 @@ LIMIT 1;`,
                   >
                     <strong style={{ color: "#2dd4bf" }}>A — API-First</strong>
                     <p style={{ margin: "0.3rem 0 0", fontSize: "0.8rem" }}>
-                      Contratos OpenAPI 3.1 y validación en tiempo de ejecución con esquemas{" "}
-                      <strong>Zod</strong> compartidos en <code>@poc-mach/types</code>.
+                      Toda funcionalidad se expone mediante contratos claros (OpenAPI 3.1 y{" "}
+                      <a href="#glosario-zod" style={{ color: "#38bdf8" }}>
+                        esquemas Zod
+                      </a>
+                      ), permitiendo conectar canales web, móviles, B2B o puntos de venta sin
+                      reescribir la lógica central.
                     </p>
                   </div>
                   <div
@@ -1430,8 +1522,15 @@ LIMIT 1;`,
                   >
                     <strong style={{ color: "#a7f3d0" }}>C — Cloud-Native</strong>
                     <p style={{ margin: "0.3rem 0 0", fontSize: "0.8rem" }}>
-                      Infraestructura 100% declarativa en <strong>AWS CDK v2</strong> desplegada en{" "}
-                      <code>mx-central-1</code> mediante federación OIDC sin claves estáticas.
+                      Infraestructura 100% Serverless y declarativa en{" "}
+                      <a href="#glosario-cdk" style={{ color: "#38bdf8" }}>
+                        AWS CDK v2
+                      </a>{" "}
+                      desplegada en Querétaro (<code>mx-central-1</code>) con seguridad{" "}
+                      <a href="#glosario-oidc" style={{ color: "#38bdf8" }}>
+                        OIDC sin llaves estáticas
+                      </a>
+                      .
                     </p>
                   </div>
                   <div
@@ -1444,9 +1543,12 @@ LIMIT 1;`,
                   >
                     <strong style={{ color: "#e9d5ff" }}>H — Headless</strong>
                     <p style={{ margin: "0.3rem 0 0", fontSize: "0.8rem" }}>
-                      Portal Next.js compilado como exportación estática en{" "}
-                      <strong>GitHub Pages</strong> que propaga trazabilidad{" "}
-                      <strong>W3C Trace Context</strong> (<code>traceparent</code>).
+                      La experiencia de usuario (Next.js en GitHub Pages) está totalmente separada
+                      del backend y rastrea cada operación de extremo a extremo con{" "}
+                      <a href="#glosario-traceparent" style={{ color: "#38bdf8" }}>
+                        W3C Trace Context
+                      </a>
+                      .
                     </p>
                   </div>
                 </div>
@@ -1454,13 +1556,13 @@ LIMIT 1;`,
             )}
           </div>
 
-          {/* PANEL 2 DEL ACORDEÓN: LOS SERVICIOS USADOS */}
+          {/* PANEL 2 DEL ACORDEÓN: SERVICIOS CLOUD, NOMENCLATURA ESTÁNDAR WPP Y COMANDOS */}
           <div
             style={{
               backgroundColor: "#0f172a",
               borderRadius: 10,
               border: openAccordions["aws-services"]
-                ? "1px solid #2dd4bf"
+                ? "1px solid #38bdf8"
                 : "1px solid #334155",
               overflow: "hidden",
             }}
@@ -1485,9 +1587,19 @@ LIMIT 1;`,
               }}
             >
               <span>
-                2. Servicios de AWS y GitHub utilizados en la PoC (Región Querétaro mx-central-1)
+                2. Servicios de AWS y GitHub, Nomenclatura Estándar WPP y Comandos de Despliegue
               </span>
-              <span style={{ color: "#2dd4bf", fontSize: "0.82rem", fontWeight: 600 }}>
+              <span
+                style={{
+                  color: "#38bdf8",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  backgroundColor: "#1e293b",
+                  padding: "0.2rem 0.65rem",
+                  borderRadius: 6,
+                  border: "1px solid #334155",
+                }}
+              >
                 {openAccordions["aws-services"] ? "▲ Cerrar" : "▼ Abrir"}
               </span>
             </button>
@@ -1501,6 +1613,18 @@ LIMIT 1;`,
                   color: "#cbd5e1",
                 }}
               >
+                <p style={{ margin: "0 0 0.75rem", color: "#94a3b8" }}>
+                  Todos los recursos aprovisionados en AWS siguen el estándar de nomenclatura de{" "}
+                  <strong>WPP Enterprise Solutions</strong>:{" "}
+                  <code style={{ color: "#38bdf8" }}>
+                    {"wppes-{workload}-{env}-{region_short}-{resource_type}-{component}"}
+                  </code>{" "}
+                  (ver desglose en el{" "}
+                  <a href="#glosario-nomenclatura" style={{ color: "#38bdf8" }}>
+                    Glosario
+                  </a>
+                  ).
+                </p>
                 <div style={{ overflowX: "auto" }}>
                   <table
                     style={{
@@ -1512,7 +1636,7 @@ LIMIT 1;`,
                     }}
                   >
                     <thead>
-                      <tr style={{ color: "#2dd4bf", textAlign: "left" }}>
+                      <tr style={{ color: "#38bdf8", textAlign: "left" }}>
                         <th style={{ padding: "0.6rem", borderBottom: "1px solid #334155" }}>
                           Capa
                         </th>
@@ -1521,6 +1645,9 @@ LIMIT 1;`,
                         </th>
                         <th style={{ padding: "0.6rem", borderBottom: "1px solid #334155" }}>
                           Identificador Estándar (mxc1)
+                        </th>
+                        <th style={{ padding: "0.6rem", borderBottom: "1px solid #334155" }}>
+                          Ámbito
                         </th>
                         <th style={{ padding: "0.6rem", borderBottom: "1px solid #334155" }}>
                           Función en la Arquitectura
@@ -1547,12 +1674,45 @@ LIMIT 1;`,
                             {item.resourceName}
                           </td>
                           <td style={{ padding: "0.55rem 0.6rem", color: "#94a3b8" }}>
+                            {item.scope}
+                          </td>
+                          <td style={{ padding: "0.55rem 0.6rem", color: "#cbd5e1" }}>
                             {item.purpose}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "1rem",
+                    backgroundColor: "#0b1120",
+                    padding: "1rem",
+                    borderRadius: 8,
+                    border: "1px solid #1e293b",
+                  }}
+                >
+                  <strong style={{ color: "#38bdf8", display: "block", marginBottom: "0.5rem" }}>
+                    Comandos de Autenticación Sin Claves Estáticas y Despliegue CDK en Querétaro (
+                    <code>mx-central-1</code>):
+                  </strong>
+                  <pre
+                    style={{
+                      margin: 0,
+                      overflowX: "auto",
+                      color: "#e2e8f0",
+                      fontSize: "0.78rem",
+                    }}
+                  >{`# Opción A: Despliegue automatizado por GitHub Actions mediante Federación OIDC (Recomendado)
+gh workflow run deploy-infra-cdk.yml --ref main
+gh run list --workflow=deploy-infra-cdk.yml --limit 3
+
+# Opción B: Ejecución desde terminal local con perfil SSO en Querétaro (mx-central-1)
+aws configure sso --profile wppes-mach-poc-dev
+aws sso login --profile wppes-mach-poc-dev
+AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach-poc-dev`}</pre>
                 </div>
               </div>
             )}
@@ -1591,7 +1751,17 @@ LIMIT 1;`,
               <span>
                 3. Diagrama Mermaid — Arquitectura en modo API-Led Connectivity (xAPI → pAPI → sAPI)
               </span>
-              <span style={{ color: "#38bdf8", fontSize: "0.82rem", fontWeight: 600 }}>
+              <span
+                style={{
+                  color: "#38bdf8",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  backgroundColor: "#1e293b",
+                  padding: "0.2rem 0.65rem",
+                  borderRadius: 6,
+                  border: "1px solid #334155",
+                }}
+              >
                 {openAccordions["mermaid-api-led"] ? "▲ Cerrar" : "▼ Abrir"}
               </span>
             </button>
@@ -1623,7 +1793,7 @@ LIMIT 1;`,
               backgroundColor: "#0f172a",
               borderRadius: 10,
               border: openAccordions["mermaid-e2e-cicd"]
-                ? "1px solid #a855f7"
+                ? "1px solid #38bdf8"
                 : "1px solid #334155",
               overflow: "hidden",
             }}
@@ -1651,7 +1821,17 @@ LIMIT 1;`,
                 4. Diagrama Mermaid — Interacción de extremo a extremo (GitHub Actions OIDC → AWS
                 RDS PostgreSQL)
               </span>
-              <span style={{ color: "#e9d5ff", fontSize: "0.82rem", fontWeight: 600 }}>
+              <span
+                style={{
+                  color: "#38bdf8",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  backgroundColor: "#1e293b",
+                  padding: "0.2rem 0.65rem",
+                  borderRadius: 6,
+                  border: "1px solid #334155",
+                }}
+              >
                 {openAccordions["mermaid-e2e-cicd"] ? "▲ Cerrar" : "▼ Abrir"}
               </span>
             </button>
@@ -1679,7 +1859,7 @@ LIMIT 1;`,
         </div>
       </section>
 
-      {/* BARRA DE NAVEGACIÓN POR PESTAÑAS (ESTADOS PERSISTENTES E INDEPENDIENTES) */}
+      {/* BARRA DE NAVEGACIÓN POR PESTAÑAS OPERATIVAS (SIN DUPLICAR LA TABLA DE SERVICIOS) */}
       <nav
         aria-label="Operaciones API-Led"
         style={{
@@ -1751,23 +1931,6 @@ LIMIT 1;`,
               Respuesta guardada
             </span>
           )}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("naming")}
-          style={{
-            padding: "0.7rem 1.2rem",
-            borderRadius: 10,
-            border: activeTab === "naming" ? "2px solid #a855f7" : "1px solid #334155",
-            backgroundColor: activeTab === "naming" ? "#6b21a8" : "#1e293b",
-            color: "#ffffff",
-            fontWeight: 700,
-            fontSize: "0.9rem",
-            cursor: "pointer",
-          }}
-        >
-          3. Nomenclatura Estándar WPP & Setup AWS SSO
         </button>
       </nav>
 
@@ -2267,144 +2430,422 @@ LIMIT 1;`,
       )}
 
       {/* ===================================================================== */}
-      {/* PESTAÑA 3: NOMENCLATURA ESTÁNDAR WPP ENTERPRISE SOLUTIONS & GUÍA AWS  */}
+      {/* GLOSARIO DE TÉRMINOS TÉCNICOS Y ARQUITECTÓNICOS                       */}
       {/* ===================================================================== */}
-      {activeTab === "naming" && (
-        <section
+      <section
+        id="glosario-tecnico"
+        aria-label="Glosario de Términos Técnicos y Arquitectónicos"
+        style={{
+          marginTop: "2.25rem",
+          backgroundColor: "#1e293b",
+          padding: "1.5rem",
+          borderRadius: 12,
+          border: "1px solid #334155",
+        }}
+      >
+        <div style={{ marginBottom: "1rem" }}>
+          <h2 style={{ margin: 0, fontSize: "1.25rem", color: "#f8fafc" }}>
+            Glosario de Términos Técnicos y Arquitectónicos
+          </h2>
+          <p style={{ margin: "0.3rem 0 0", fontSize: "0.85rem", color: "#94a3b8" }}>
+            Explicación clara de cada estándar, herramienta y convención utilizados en esta Prueba
+            de Concepto de <strong>WPP Enterprise Solutions</strong> y <strong>VML</strong>.
+          </p>
+        </div>
+
+        <div
           style={{
-            backgroundColor: "#1e293b",
-            padding: "1.5rem",
-            borderRadius: 12,
-            border: "1px solid #334155",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(310px, 1fr))",
+            gap: "0.9rem",
           }}
         >
-          <h2 style={{ marginTop: 0, fontSize: "1.3rem", color: "#e9d5ff" }}>
-            Estándar de Nomenclatura Cloud — WPP Enterprise Solutions
-          </h2>
-          <p style={{ fontSize: "0.88rem", color: "#cbd5e1" }}>
-            Todos los servicios definidos en AWS CDK v2 (<code>infra/lib/poc-stack.ts</code>)
-            siguen la convención corporativa:{" "}
-            <code style={{ color: "#38bdf8" }}>
-              {"wppes-{workload}-{env}-{region_short}-{resource_type}-{component}"}
-            </code>
-          </p>
-
-          <div style={{ overflowX: "auto", marginTop: "1rem" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: "0.83rem",
-                backgroundColor: "#0f172a",
-                borderRadius: 8,
-              }}
-            >
-              <thead>
-                <tr style={{ backgroundColor: "#0b1120", color: "#38bdf8", textAlign: "left" }}>
-                  <th style={{ padding: "0.75rem", borderBottom: "1px solid #334155" }}>Capa</th>
-                  <th style={{ padding: "0.75rem", borderBottom: "1px solid #334155" }}>
-                    Servicio AWS
-                  </th>
-                  <th style={{ padding: "0.75rem", borderBottom: "1px solid #334155" }}>
-                    Nombre Estándar del Recurso
-                  </th>
-                  <th style={{ padding: "0.75rem", borderBottom: "1px solid #334155" }}>Ámbito</th>
-                  <th style={{ padding: "0.75rem", borderBottom: "1px solid #334155" }}>
-                    Responsabilidad
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {WPP_AWS_NAMING_CATALOG.map((row) => (
-                  <tr key={row.resourceName} style={{ borderBottom: "1px solid #1e293b" }}>
-                    <td style={{ padding: "0.65rem 0.75rem", fontWeight: 600 }}>{row.layer}</td>
-                    <td style={{ padding: "0.65rem 0.75rem", color: "#cbd5e1" }}>{row.service}</td>
-                    <td
-                      style={{
-                        padding: "0.65rem 0.75rem",
-                        fontFamily: "monospace",
-                        color: "#a7f3d0",
-                      }}
-                    >
-                      {row.resourceName}
-                    </td>
-                    <td style={{ padding: "0.65rem 0.75rem", color: "#94a3b8" }}>{row.scope}</td>
-                    <td style={{ padding: "0.65rem 0.75rem", color: "#cbd5e1" }}>{row.purpose}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div
+          {/* 1. WPP Enterprise Solutions & VML */}
+          <article
+            id="glosario-wppes"
             style={{
-              marginTop: "1.5rem",
               backgroundColor: "#0f172a",
-              padding: "1.25rem",
+              padding: "1rem",
               borderRadius: 10,
               border: "1px solid #334155",
             }}
           >
-            <h3 style={{ marginTop: 0, fontSize: "1.05rem", color: "#38bdf8" }}>
-              Pasos de Autenticación Interactiva en AWS (SSO) y Despliegue CDK
-            </h3>
-            <pre
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+              <strong style={{ color: "#38bdf8", fontSize: "0.92rem" }}>
+                WPP Enterprise Solutions &amp; VML
+              </strong>
+              <a
+                href="https://www.vml.com/expertise/enterprise-solutions"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: "0.75rem", color: "#a7f3d0" }}
+              >
+                Sitio oficial ↗
+              </a>
+            </div>
+            <p
               style={{
-                margin: 0,
-                backgroundColor: "#0b1120",
-                padding: "1rem",
-                borderRadius: 8,
-                overflowX: "auto",
-                color: "#e2e8f0",
-                fontSize: "0.8rem",
+                margin: "0.45rem 0 0",
+                fontSize: "0.82rem",
+                color: "#cbd5e1",
+                lineHeight: 1.5,
               }}
-            >{`# 1. Preservar AWS Free Tier: NO crear AWS Organization (usar Account Instance o IAM Role OIDC en mx-central-1)
-aws configure sso --profile wppes-mach-poc-dev
-# Region: mx-central-1 (México centro - Querétaro)
+            >
+              Unidad operativa de transformación de negocios de <strong>WPP</strong> que, junto con{" "}
+              <strong>VML</strong>, reúne a más de 12,000 especialistas en ingeniería, plataformas,
+              comercio, CRM, CX e IA en más de 40 mercados para construir soluciones de crecimiento
+              con socios como AWS.
+            </p>
+          </article>
 
-# 2. Iniciar sesión vía navegador y verificar identidad STS
-aws sso login --profile wppes-mach-poc-dev
-aws sts get-caller-identity --profile wppes-mach-poc-dev
+          {/* 2. Arquitectura MACH */}
+          <article
+            id="glosario-mach"
+            style={{
+              backgroundColor: "#0f172a",
+              padding: "1rem",
+              borderRadius: 10,
+              border: "1px solid #334155",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+              <strong style={{ color: "#38bdf8", fontSize: "0.92rem" }}>
+                Arquitectura MACH
+              </strong>
+              <a
+                href="https://machalliance.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: "0.75rem", color: "#a7f3d0" }}
+              >
+                MACH Alliance ↗
+              </a>
+            </div>
+            <p
+              style={{
+                margin: "0.45rem 0 0",
+                fontSize: "0.82rem",
+                color: "#cbd5e1",
+                lineHeight: 1.5,
+              }}
+            >
+              Estándar tecnológico compuesto por <strong>M</strong>icroservices (servicios
+              independientes), <strong>A</strong>PI-First (todo expuesto por APIs),{" "}
+              <strong>C</strong>loud-Native (nativo en la nube serverless) y <strong>H</strong>
+              eadless (interfaz visual desacoplada del backend).
+            </p>
+          </article>
 
-# 3. Bootstrap y Despliegue del Stack CDK v2 en Querétaro (wppes-mach-poc-dev-mxc1-stack)
-pnpm build
-cd infra
-AWS_REGION=mx-central-1 npx cdk bootstrap --profile wppes-mach-poc-dev
-AWS_REGION=mx-central-1 npx cdk deploy WppesMachPocDevStack --profile wppes-mach-poc-dev --require-approval never`}</pre>
-          </div>
-        </section>
-      )}
+          {/* 3. API-Led Connectivity */}
+          <article
+            id="glosario-api-led"
+            style={{
+              backgroundColor: "#0f172a",
+              padding: "1rem",
+              borderRadius: 10,
+              border: "1px solid #334155",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+              <strong style={{ color: "#38bdf8", fontSize: "0.92rem" }}>
+                API-Led Connectivity (xAPI, pAPI, sAPI)
+              </strong>
+              <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Patrón de 3 Capas</span>
+            </div>
+            <p
+              style={{
+                margin: "0.45rem 0 0",
+                fontSize: "0.82rem",
+                color: "#cbd5e1",
+                lineHeight: 1.5,
+              }}
+            >
+              Método que organiza las APIs en tres niveles: <strong>xAPI (Experience API)</strong>{" "}
+              para atender el canal web/móvil; <strong>pAPI (Process API)</strong> para aplicar
+              reglas de negocio y orquestación; y <strong>sAPI (System API)</strong> para hablar de
+              forma segura con la base de datos.
+            </p>
+          </article>
 
-      {/* PIE DE PÁGINA CORPORATIVO */}
+          {/* 4. Zod */}
+          <article
+            id="glosario-zod"
+            style={{
+              backgroundColor: "#0f172a",
+              padding: "1rem",
+              borderRadius: 10,
+              border: "1px solid #334155",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+              <strong style={{ color: "#38bdf8", fontSize: "0.92rem" }}>
+                Zod (Contratos de Datos y Validación)
+              </strong>
+              <a
+                href="https://zod.dev/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: "0.75rem", color: "#a7f3d0" }}
+              >
+                zod.dev ↗
+              </a>
+            </div>
+            <p
+              style={{
+                margin: "0.45rem 0 0",
+                fontSize: "0.82rem",
+                color: "#cbd5e1",
+                lineHeight: 1.5,
+              }}
+            >
+              Librería de validación para TypeScript que actúa como un &quot;contrato único&quot;
+              entre el portal web y los microservicios. Garantiza que ningún dato incompleto,
+              monto negativo o identificador mal formado llegue al backend o a la base de datos.
+            </p>
+          </article>
+
+          {/* 5. W3C Trace Context / traceparent */}
+          <article
+            id="glosario-traceparent"
+            style={{
+              backgroundColor: "#0f172a",
+              padding: "1rem",
+              borderRadius: 10,
+              border: "1px solid #334155",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+              <strong style={{ color: "#38bdf8", fontSize: "0.92rem" }}>
+                W3C Trace Context (<code>traceparent</code>)
+              </strong>
+              <a
+                href="https://www.w3.org/TR/trace-context/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: "0.75rem", color: "#a7f3d0" }}
+              >
+                Estándar W3C ↗
+              </a>
+            </div>
+            <p
+              style={{
+                margin: "0.45rem 0 0",
+                fontSize: "0.82rem",
+                color: "#cbd5e1",
+                lineHeight: 1.5,
+              }}
+            >
+              Estándar mundial del consorcio W3C para rastrear una operación a través de múltiples
+              microservicios. Genera un encabezado{" "}
+              <code>00-&#123;traceId&#125;-&#123;spanId&#125;-01</code> donde el{" "}
+              <code>traceId</code> identifica toda la transacción de principio a fin y el{" "}
+              <code>spanId</code> identifica el paso exacto en cada capa.
+            </p>
+          </article>
+
+          {/* 6. Estándar de Nomenclatura wppes-mach-poc-dev-mxc1-* */}
+          <article
+            id="glosario-nomenclatura"
+            style={{
+              backgroundColor: "#0f172a",
+              padding: "1rem",
+              borderRadius: 10,
+              border: "1px solid #334155",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+              <strong style={{ color: "#38bdf8", fontSize: "0.92rem" }}>
+                Nomenclatura <code>wppes-mach-poc-dev-mxc1-*</code>
+              </strong>
+              <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Gobernanza Cloud</span>
+            </div>
+            <p
+              style={{
+                margin: "0.45rem 0 0",
+                fontSize: "0.82rem",
+                color: "#cbd5e1",
+                lineHeight: 1.5,
+              }}
+            >
+              Convención empresarial para nombrar recursos en la nube de forma ordenada y auditable:
+              <br />• <code>wppes</code>: WPP Enterprise Solutions
+              <br />• <code>mach-poc</code>: Nombre del proyecto / carga de trabajo
+              <br />• <code>dev</code>: Ambiente de desarrollo
+              <br />• <code>mxc1</code>: Región AWS México Central — Querétaro (
+              <code>mx-central-1</code>)
+              <br />• <code>lmb / apigw / rds / sg</code>: Tipo de servicio AWS y componente.
+            </p>
+          </article>
+
+          {/* 7. OpenID Connect (OIDC) */}
+          <article
+            id="glosario-oidc"
+            style={{
+              backgroundColor: "#0f172a",
+              padding: "1rem",
+              borderRadius: 10,
+              border: "1px solid #334155",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+              <strong style={{ color: "#38bdf8", fontSize: "0.92rem" }}>
+                Federación OIDC (Cero Claves Estáticas)
+              </strong>
+              <a
+                href="https://docs.github.com/es/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: "0.75rem", color: "#a7f3d0" }}
+              >
+                Guía OIDC ↗
+              </a>
+            </div>
+            <p
+              style={{
+                margin: "0.45rem 0 0",
+                fontSize: "0.82rem",
+                color: "#cbd5e1",
+                lineHeight: 1.5,
+              }}
+            >
+              Mecanismo de seguridad DevSecOps mediante el cual GitHub Actions se autentica
+              directamente con AWS usando tokens criptográficos efímeros, eliminando por completo el
+              riesgo de guardar contraseñas o llaves secretas permanentes.
+            </p>
+          </article>
+
+          {/* 8. AWS CDK v2 */}
+          <article
+            id="glosario-cdk"
+            style={{
+              backgroundColor: "#0f172a",
+              padding: "1rem",
+              borderRadius: 10,
+              border: "1px solid #334155",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+              <strong style={{ color: "#38bdf8", fontSize: "0.92rem" }}>
+                AWS CDK v2 (Infraestructura como Código)
+              </strong>
+              <a
+                href="https://aws.amazon.com/es/cdk/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: "0.75rem", color: "#a7f3d0" }}
+              >
+                AWS CDK ↗
+              </a>
+            </div>
+            <p
+              style={{
+                margin: "0.45rem 0 0",
+                fontSize: "0.82rem",
+                color: "#cbd5e1",
+                lineHeight: 1.5,
+              }}
+            >
+              Framework de AWS que permite definir redes VPC, bases de datos PostgreSQL, API
+              Gateways y funciones Lambda utilizando código TypeScript reproducible y auditable, en
+              lugar de crearlos manualmente en la consola.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      {/* PIE DE PÁGINA CORPORATIVO CON ENLACES Y EXPLICACIONES */}
       <footer
         style={{
           marginTop: "2.5rem",
           paddingTop: "1.25rem",
           borderTop: "1px solid #1e293b",
           display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "0.75rem",
+          flexDirection: "column",
+          gap: "0.65rem",
           fontSize: "0.8rem",
-          color: "#64748b",
+          color: "#94a3b8",
         }}
       >
-        <div>
-          © 2026{" "}
-          <a
-            href="https://www.wpp.com/en/wpp-enterprise-solutions"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: "#38bdf8", textDecoration: "none", fontWeight: 600 }}
-          >
-            WPP Enterprise Solutions
-          </a>{" "}
-          — PoC MACH Architecture &amp; API-Led Connectivity on AWS (Querétaro, México).
-        </div>
-        <div>
-          Estándar de Recursos: <code>wppes-mach-poc-dev-mxc1-*</code> | Trazabilidad:{" "}
-          <code>W3C Trace Context</code>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "0.75rem",
+          }}
+        >
+          <div>
+            © 2026{" "}
+            <a
+              href="https://www.wpp.com/en/wpp-enterprise-solutions"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "#38bdf8", textDecoration: "none", fontWeight: 600 }}
+            >
+              WPP Enterprise Solutions
+            </a>{" "}
+            &amp;{" "}
+            <a
+              href="https://www.vml.com/expertise/enterprise-solutions"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "#38bdf8", textDecoration: "none", fontWeight: 600 }}
+            >
+              VML
+            </a>{" "}
+            — PoC MACH Architecture &amp; API-Led Connectivity on AWS (Querétaro, México).
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.85rem" }}>
+            <span>
+              Estándar de Recursos:{" "}
+              <a
+                href="#glosario-nomenclatura"
+                title="Ver explicación de la convención de nombres de recursos en el Glosario"
+                style={{ color: "#a7f3d0", textDecoration: "underline", fontFamily: "monospace" }}
+              >
+                wppes-mach-poc-dev-mxc1-*
+              </a>{" "}
+              <span style={{ color: "#64748b" }}>
+                (Prefijo corporativo en AWS Querétaro)
+              </span>
+            </span>
+            <span>|</span>
+            <span>
+              Trazabilidad:{" "}
+              <a
+                href="https://www.w3.org/TR/trace-context/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Especificación oficial W3C Trace Context"
+                style={{ color: "#38bdf8", textDecoration: "underline" }}
+              >
+                W3C Trace Context ↗
+              </a>{" "}
+              (
+              <a href="#glosario-traceparent" style={{ color: "#cbd5e1" }}>
+                ¿Qué es?
+              </a>
+              )
+            </span>
+            <span>|</span>
+            <span>
+              Contratos:{" "}
+              <a
+                href="https://zod.dev/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#38bdf8", textDecoration: "underline" }}
+              >
+                Zod ↗
+              </a>{" "}
+              (
+              <a href="#glosario-zod" style={{ color: "#cbd5e1" }}>
+                ¿Qué es?
+              </a>
+              )
+            </span>
+          </div>
         </div>
       </footer>
     </main>

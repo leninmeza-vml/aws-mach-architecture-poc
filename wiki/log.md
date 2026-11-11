@@ -50,6 +50,13 @@ Para consultar las últimas 5 operaciones vía terminal: `grep "^## \[" wiki/log
 - Se agregó en `apps/web/src/app/page.tsx` el acordeón interactivo de 4 secciones (iniciando cerrado): explicación de la PoC, tabla de servicios, diagrama Mermaid API-Led y diagrama Mermaid E2E desde GitHub Actions hasta RDS PostgreSQL.
 - Se re-indexó el repositorio en `codebase-memory` y se desplegó en GitHub Pages.
 
+## [2026-11-11] update | Contexto de WPP Enterprise Solutions & VML, Eliminación de Pestaña Duplicada, Unificación de Botones y Glosario Técnico
+- Se actualizó el encabezado de `apps/web/src/app/page.tsx` con el objetivo empresarial de la PoC y la descripción de capacidades de **WPP Enterprise Solutions** y **VML** sobre AWS.
+- Se eliminó la tercera pestaña redundante (`Nomenclatura Estándar WPP & Setup AWS SSO`), consolidando la tabla de servicios, nomenclatura y comandos CLI en el Panel 2 del acordeón.
+- Se unificó el color y estilo visual de los 4 botones `"Abrir / Cerrar"` del acordeón (`#38bdf8`).
+- Se añadió el **Glosario de Términos Técnicos y Arquitectónicos** (`#glosario-tecnico`) al final de la página y enlaces explicativos en el pie de página (`footer`).
+
+
 
 
 
