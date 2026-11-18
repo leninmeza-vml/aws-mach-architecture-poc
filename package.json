@@ -15,9 +15,9 @@
     "dev": "turbo run dev"
   },
   "devDependencies": {
-    "@types/node": "^20.14.0",
+    "@types/node": "^26.6.6",
     "esbuild": "^0.28.2",
     "turbo": "^2.1.0",
-    "typescript": "^5.5.4"
+    "typescript": "^7.0.2"
   }
 }
