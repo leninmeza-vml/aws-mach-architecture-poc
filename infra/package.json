@@ -13,13 +13,13 @@
     "@poc-mach/papi": "workspace:*",
     "@poc-mach/sapi": "workspace:*",
     "@poc-mach/xapi": "workspace:*",
-    "aws-cdk-lib": "^2.150.0",
+    "aws-cdk-lib": "^2.277.0",
     "constructs": "^10.3.0"
   },
   "devDependencies": {
     "@poc-mach/tsconfig": "workspace:*",
     "@types/node": "^20.14.0",
-    "aws-cdk": "^2.150.0",
+    "aws-cdk": "^2.1148.1",
     "typescript": "^5.5.4"
   }
 }
